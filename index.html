@@ -111,6 +111,9 @@ button,input,select{font:inherit;color:inherit}
 .recent li{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--line);font-size:14px}
 .recent li b{font-family:var(--f-display);color:var(--lamp);font-size:17px;font-variant-numeric:tabular-nums}
 .recent li span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.recent li span small{display:block;color:var(--muted);font-size:12px;white-space:normal}
+.picBtn{font-size:18px;padding:14px 20px;display:inline-flex;align-items:center;gap:10px;background:var(--ok);color:#06281a;border-color:var(--ok)}
+.picBtn kbd{font:700 13px var(--f-body);background:rgba(0,0,0,.18);border-radius:6px;padding:2px 7px}
 .recent li time{color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
 .res.flash{border-color:var(--ok);box-shadow:0 0 0 2px var(--ok) inset}
 @media (max-width:860px){.desk{grid-template-columns:1fr}}
@@ -204,7 +207,7 @@ td.num{font-variant-numeric:tabular-nums;font-weight:700;color:var(--lamp)}
       </div>
       <aside class="recent">
         <div class="row"><span class="stat" id="kCount">0</span><span class="label">hadir daripada <span id="kTotal">0</span> staf</span></div>
-        <div class="label">Terkini didaftar</div>
+        <div class="label" id="kRecentLbl">Terkini didaftar</div>
         <ol id="kRecent"></ol>
       </aside>
     </div>
@@ -247,7 +250,7 @@ td.num{font-variant-numeric:tabular-nums;font-weight:700;color:var(--lamp)}
           <h3>Kehadiran</h3>
           <div class="row"><span class="stat" id="hCount">0</span><span class="label">telah daftar</span></div>
           <div class="field"><label class="label" for="hFind">Cari</label><input id="hFind" placeholder="Nama atau no staf"></div>
-          <div class="tbl-wrap"><table><thead><tr><th>No</th><th>Nama</th><th>Cawangan</th><th>Masa</th><th></th></tr></thead><tbody id="hBody"></tbody></table></div>
+          <div class="tbl-wrap"><table><thead><tr><th>No</th><th>Nama</th><th>Cawangan</th><th>Masa</th><th>Disahkan PIC</th><th>Kaunter</th><th></th></tr></thead><tbody id="hBody"></tbody></table></div>
           <div class="row"><button class="btn small" id="expH">Muat turun CSV kehadiran</button></div>
         </div>
 
@@ -264,18 +267,19 @@ td.num{font-variant-numeric:tabular-nums;font-weight:700;color:var(--lamp)}
 
         <div class="box" id="hrBox" hidden>
           <h3>ID HR cawangan</h3>
-          <p>Cipta ID untuk staf HR di setiap cawangan. ID HR hanya boleh buka <b>Daftar hadir</b>.</p>
+          <p>Cipta ID untuk setiap kaunter cawangan, dengan 3–4 nama PIC. ID HR hanya boleh buka <b>Daftar hadir</b>, dan setiap kehadiran mesti disahkan oleh salah seorang PIC kaunter itu.</p>
           <form id="hrForm" autocomplete="off">
             <div class="row">
               <div class="field"><label class="label" for="hrId">ID</label><input id="hrId" placeholder="cth. HR-KL" autocomplete="off" required></div>
               <div class="field"><label class="label" for="hrPw">Kata laluan</label><input id="hrPw" type="password" autocomplete="new-password" minlength="6" placeholder="Min. 6 aksara" required></div>
             </div>
+            <div class="field" style="margin-top:8px"><label class="label" for="hrPics">Nama PIC kaunter ini (pisah dengan koma)</label><input id="hrPics" placeholder="cth. Ali, Siti, Kumar, Mei Ling"></div>
             <div class="row" style="margin-top:8px">
               <button class="btn small lamp" type="submit" id="hrCreate">Cipta ID HR</button>
               <button class="btn small" type="button" id="hrPass">Tukar kata laluan</button>
             </div>
           </form>
-          <div class="tbl-wrap"><table><thead><tr><th>ID</th><th>Log masuk terakhir</th><th></th></tr></thead><tbody id="hrBody"></tbody></table></div>
+          <div class="tbl-wrap"><table><thead><tr><th>ID</th><th>Nama PIC (pisah dengan koma)</th><th>Log masuk terakhir</th><th></th></tr></thead><tbody id="hrBody"></tbody></table></div>
         </div>
       </div>
     </div>
@@ -307,6 +311,18 @@ td.num{font-variant-numeric:tabular-nums;font-weight:700;color:var(--lamp)}
     <div class="calltxt" id="lErr" role="alert"></div>
     <div class="actions"><button class="btn lamp" id="lBtn" type="submit">Masuk</button></div>
   </form>
+</div>
+
+<div class="overlay" id="picOv" hidden>
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="picTitle">
+    <div class="eyebrow" id="picTitle">Sahkan kehadiran</div>
+    <div class="bignum" id="picNo" style="font-size:clamp(48px,10vw,84px)"></div>
+    <div class="wname" id="picName"></div>
+    <div class="wbranch" id="picBr"></div>
+    <div class="calltxt" style="margin-top:18px">Pilih PIC yang mengesahkan kehadiran (atau tekan nombor):</div>
+    <div class="actions" id="picBtns"></div>
+    <div class="actions"><button class="btn" id="picCancel">Batal</button></div>
+  </div>
 </div>
 
 <div class="overlay" id="cfOv" hidden>
@@ -389,17 +405,18 @@ function makeSupa(sb){
     for(;;){ const {data,error}=await sb.from(table).select(cols).order("no").range(from,from+N-1); if(error) throw error; out=out.concat(data); if(data.length<N) return out; from+=N; }
   }
   const one=async t=>{ const {data,error}=await sb.from(t).select("data").eq("id",1).maybeSingle(); if(error) throw error; return data?.data; };
-  const pushHadir=()=>subs.hadir?.(new Map(hadir));
+  const pushHadir=()=>{ S.hInfo=new Map([...hadir].map(([no,r])=>[no,r])); subs.hadir?.(new Map([...hadir].map(([no,r])=>[no,r.at]))); };
+  const recOf=r=>({at:Number(r.at), pic:r.pic||"", kaunter:r.kaunter||""});
   const loaders={
     staff: async()=>{ const rows=await fetchAll("staff","no,name,branch"); staffIds=rows.map(r=>r.no); subs.staff?.(rows.map(r=>[r.no,r.name,r.branch])); },
-    hadir: async()=>{ const rows=await fetchAll("hadir","no,at"); hadir.clear(); rows.forEach(r=>hadir.set(r.no,Number(r.at))); pushHadir(); },
+    hadir: async()=>{ const rows=await fetchAll("hadir","no,at,pic,kaunter"); hadir.clear(); rows.forEach(r=>hadir.set(r.no,recOf(r))); pushHadir(); },
     state: async()=>subs.state?.((await one("draw_state"))||{winners:[],forfeited:[],cur:null}),
     cfg:   async()=>subs.cfg?.((await one("config"))||DEFAULT_CFG),
   };
   const reload=(k,ms=300)=>{ clearTimeout(timers[k]); timers[k]=setTimeout(()=>loaders[k]().catch(e=>{ console.warn(e); toast("Gagal memuat data. Semak sambungan internet.", true); }),ms); };
   sb.channel("cabutan")
     .on("postgres_changes",{event:"*",schema:"public",table:"staff"},()=>reload("staff",600))
-    .on("postgres_changes",{event:"*",schema:"public",table:"hadir"},p=>{ if(p.eventType==="DELETE") hadir.delete(p.old?.no); else hadir.set(p.new.no,Number(p.new.at)); clearTimeout(timers.h); timers.h=setTimeout(pushHadir,80); })
+    .on("postgres_changes",{event:"*",schema:"public",table:"hadir"},p=>{ if(p.eventType==="DELETE") hadir.delete(p.old?.no); else hadir.set(p.new.no,recOf(p.new)); clearTimeout(timers.h); timers.h=setTimeout(pushHadir,80); })
     .on("postgres_changes",{event:"*",schema:"public",table:"draw_state"},p=>{ if(p.new?.data) subs.state?.(p.new.data); else reload("state"); })
     .on("postgres_changes",{event:"*",schema:"public",table:"config"},p=>{ if(p.new?.data) subs.cfg?.(p.new.data); else reload("cfg"); })
     .subscribe(status=>{ const ok=status==="SUBSCRIBED"; setMode(ok, ok?"Data dikongsi secara langsung":"Menyambung semula…"); if(ok) Object.keys(subs).forEach(k=>reload(k,0)); });
@@ -412,7 +429,7 @@ function makeSupa(sb){
       for(let i=0;i<gone.length;i+=200) chk(await sb.from("staff").delete().in("no",gone.slice(i,i+200)));
       await loaders.staff();
     },
-    async checkin(no){ chk(await sb.from("hadir").upsert({no},{onConflict:"no",ignoreDuplicates:true})); if(!hadir.has(no)){ hadir.set(no,Date.now()); pushHadir(); } },
+    async checkin(no, pic){ chk(await sb.from("hadir").upsert({no, pic:pic||""},{onConflict:"no",ignoreDuplicates:true})); if(!hadir.has(no)){ hadir.set(no,{at:Date.now(),pic:pic||"",kaunter:S.me||""}); pushHadir(); } },
     async uncheck(no){ chk(await sb.from("hadir").delete().eq("no",no)); hadir.delete(no); pushHadir(); },
     async resetHadir(){ chk(await sb.from("hadir").delete().neq("no","")); hadir.clear(); pushHadir(); },
     async saveState(s){ chk(await sb.from("draw_state").upsert({id:1,data:s})); subs.state?.(s); },
@@ -430,7 +447,8 @@ function wire(st){
   st.on("cfg", c=>{ S.cfg={title:c.title||DEFAULT_CFG.title, prizes:(c.prizes&&c.prizes.length)?c.prizes:DEFAULT_CFG.prizes}; renderAll(); renderCfgEdit(); });
 }
 /* ---------- roles: MASTER = semua paparan; HR = daftar hadir sahaja ---------- */
-S.role="master";
+S.role="master"; S.me=""; S.pics=[]; S.hInfo=new Map(); let SB=null;
+const idOf=email=>String(email||"").replace(/@award.local$/,"").toUpperCase();
 function applyRole(role, label){
   S.role=role;
   document.querySelectorAll(".nav a").forEach(a=>a.hidden = role==="hr" && a.dataset.v!=="daftar");
@@ -439,33 +457,46 @@ function applyRole(role, label){
 }
 const toEmail=id=>{ id=id.trim().toLowerCase(); return id.includes("@") ? id : id+"@award.local"; };
 async function startSupa(sb, session){
-  const {data,error}=await sb.from("app_roles").select("role").maybeSingle();
+  let {data,error}=await sb.from("app_roles").select("role,pics").maybeSingle();
+  if(error && /pics/.test(error.message||"")) ({data,error}=await sb.from("app_roles").select("role").maybeSingle()); // supabase-pic.sql belum dijalankan
   if(error || !data){ await sb.auth.signOut(); return showLogin(sb, error ? "Tidak dapat menyemak peranan. Cuba lagi." : "ID ini tiada akses ke sistem cabutan."); }
+  SB=sb; S.me=(session?.user?.email||"").toLowerCase(); S.pics=data.pics||[];
   $("loginOv").hidden=true;
-  applyRole(data.role, data.role==="hr" ? "HR" : "MASTER");
+  applyRole(data.role, data.role==="hr" ? idOf(S.me) : "MASTER");
   wire(makeSupa(sb));
   if(data.role==="master") initHrAdmin(sb);
 }
-/* MASTER: urus ID HR cawangan melalui fungsi SQL hr_* (supabase-hr-ids.sql) */
+/* MASTER: urus ID HR cawangan + nama PIC setiap ID (fungsi SQL hr_* dan pic_set) */
+const splitPics=v=>String(v||"").split(/[,;\n]/).map(x=>x.trim()).filter(Boolean);
 function initHrAdmin(sb){
   $("hrBox").hidden=false;
-  const idOf=email=>email.replace(/@award\.local$/,"").toUpperCase();
   const fmtD=t=>t ? new Date(t).toLocaleString("ms-MY",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}) : "Belum pernah";
-  const errMsg=e=>/hr_list|hr_create|schema cache/i.test(e?.message||"") ? "Fungsi ID HR belum dipasang. Jalankan supabase-hr-ids.sql di Supabase." : (e?.message||"Gagal. Cuba lagi.");
+  const errMsg=e=>{ const m=e?.message||""; return /pic_set|pics/i.test(m) ? "Fungsi PIC belum dipasang. Jalankan supabase-pic.sql di Supabase." : /hr_list|hr_create|schema cache/i.test(m) ? "Fungsi ID HR belum dipasang. Jalankan supabase-hr-ids.sql di Supabase." : (m||"Gagal. Cuba lagi."); };
   const rpc=async(fn,args)=>{ const {data,error}=await sb.rpc(fn,args); if(error) throw new Error(errMsg(error)); return data; };
+  const savePics=async(email, input)=>{ try{ const p=await rpc("pic_set",{p_id:email,p_pics:splitPics(input.value)}); input.value=(p||[]).join(", "); if(email===S.me) S.pics=p||[]; toast(`PIC ${idOf(email)} disimpan (${(p||[]).length} nama)`); }catch(e){ toast(e.message,true); } };
+  const picCell=(email, pics)=>{ const inp=el("input",{value:(pics||[]).join(", "),placeholder:"Ali, Siti, Kumar",style:"min-width:220px;background:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 8px"}); inp.setAttribute("aria-label","Nama PIC "+idOf(email));
+    inp.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); savePics(email,inp); } });
+    return [el("td",null,inp), inp]; };
   async function load(){
     const body=$("hrBody"); body.textContent="";
-    let rows; try{ rows=await rpc("hr_list"); }catch(e){ body.append(el("tr",null, el("td",{colSpan:3,textContent:e.message,style:"white-space:normal"}))); return; }
-    rows.forEach(r=>body.append(el("tr",null, el("td",{class:"num",textContent:idOf(r.email)}), el("td",{textContent:r.created_at?fmtD(r.last_sign_in_at):"Akaun tiada"}),
-      el("td",null, el("button",{class:"btn small",textContent:"Padam",onclick:async()=>{
-        if(!await confirmBox(`Padam ID ${idOf(r.email)}?`,"ID ini tidak lagi boleh log masuk.","Padam")) return;
-        try{ await rpc("hr_delete",{p_id:r.email}); toast(`ID ${idOf(r.email)} dipadam`); load(); }catch(e){ toast(e.message,true); } }})))));
-    if(!rows.length) body.append(el("tr",null, el("td",{colSpan:3,textContent:"Belum ada ID HR. Cipta di atas."})));
+    let rows; try{ rows=await rpc("hr_list"); }catch(e){ body.append(el("tr",null, el("td",{colSpan:4,textContent:e.message,style:"white-space:normal"}))); return; }
+    const [mTd,mInp]=picCell(S.me, S.pics);
+    body.append(el("tr",null, el("td",{class:"num",textContent:idOf(S.me)+" (anda)"}), mTd, el("td",{textContent:"—"}),
+      el("td",null, el("button",{class:"btn small",textContent:"Simpan PIC",onclick:()=>savePics(S.me,mInp)}))));
+    rows.forEach(r=>{ const [td,inp]=picCell(r.email, r.pics);
+      body.append(el("tr",null, el("td",{class:"num",textContent:idOf(r.email)}), td, el("td",{textContent:r.created_at?fmtD(r.last_sign_in_at):"Akaun tiada"}),
+        el("td",null, el("button",{class:"btn small lamp",textContent:"Simpan PIC",onclick:()=>savePics(r.email,inp)}), " ",
+          el("button",{class:"btn small",textContent:"Padam",onclick:async()=>{
+            if(!await confirmBox(`Padam ID ${idOf(r.email)}?`,"ID ini tidak lagi boleh log masuk.","Padam")) return;
+            try{ await rpc("hr_delete",{p_id:r.email}); toast(`ID ${idOf(r.email)} dipadam`); load(); }catch(e){ toast(e.message,true); } }})))); });
+    if(!rows.length) body.append(el("tr",null, el("td",{colSpan:4,textContent:"Belum ada ID HR. Cipta di atas."})));
   }
   const take=()=>{ const id=$("hrId").value.trim(), pw=$("hrPw").value; if(!id||pw.length<6){ toast("Isi ID dan kata laluan (min. 6 aksara).",true); return null; } return {id,pw}; };
-  const done=msg=>{ toast(msg); $("hrPw").value=""; $("hrId").value=""; load(); };
-  $("hrForm").onsubmit=async e=>{ e.preventDefault(); const v=take(); if(!v) return;
-    try{ await rpc("hr_create",{p_id:v.id,p_password:v.pw}); done(`ID ${v.id.toUpperCase()} dicipta. Log masuk dengan ID dan kata laluan ini.`); }catch(err){ toast(err.message,true); } };
+  const done=msg=>{ toast(msg); $("hrPw").value=""; $("hrId").value=""; $("hrPics").value=""; load(); };
+  $("hrForm").onsubmit=async e=>{ e.preventDefault(); const v=take(); if(!v) return; const pics=splitPics($("hrPics").value);
+    if(!pics.length) return toast("Isi sekurang-kurangnya satu nama PIC untuk ID ini.",true);
+    try{ const email=await rpc("hr_create",{p_id:v.id,p_password:v.pw}); await rpc("pic_set",{p_id:email,p_pics:pics});
+      done(`ID ${v.id.toUpperCase()} dicipta dengan ${pics.length} PIC.`); }catch(err){ toast(err.message,true); load(); } };
   $("hrPass").onclick=async()=>{ const v=take(); if(!v) return;
     try{ await rpc("hr_set_password",{p_id:v.id,p_password:v.pw}); done(`Kata laluan ID ${v.id.toUpperCase()} ditukar.`); }catch(err){ toast(err.message,true); } };
   load();
@@ -627,8 +658,12 @@ let kHits=[], kFlash=null;
 function renderKiosk(){
   $("kCount").textContent=S.hadir.size; $("kTotal").textContent=S.staff.length;
   const ol=$("kRecent"); ol.textContent="";
-  const rec=[...S.hadir.entries()].sort((a,b)=>b[1]-a[1]).slice(0,30);
-  rec.forEach(([no,at])=>{ const s=findStaff(no)||{}; ol.append(el("li",null, el("b",{textContent:no}), el("span",{textContent:s.name||"—"}), el("time",{textContent:fmtT(at)}))); });
+  const mine=S.role==="hr" && S.me;  // HR nampak pendaftaran kaunter sendiri; MASTER nampak semua
+  $("kRecentLbl").textContent = mine ? "Didaftar di kaunter "+idOf(S.me) : "Terkini didaftar";
+  const rec=[...S.hadir.entries()].filter(([no])=>!mine || S.hInfo.get(no)?.kaunter===S.me).sort((a,b)=>b[1]-a[1]).slice(0,50);
+  rec.forEach(([no,at])=>{ const s=findStaff(no)||{}, h=S.hInfo.get(no)||{};
+    const sub=[s.branch, h.pic&&("Disahkan: "+h.pic), !mine&&h.kaunter&&("Kaunter "+idOf(h.kaunter))].filter(Boolean).join(" · ");
+    ol.append(el("li",null, el("b",{textContent:no}), el("span",null, s.name||"—", sub?el("small",{textContent:sub}):null), el("time",{textContent:fmtT(at)}))); });
   if(!rec.length) ol.append(el("li",null, el("span",{textContent:"Belum ada yang hadir. Nama yang ditanda hadir akan muncul di sini.",style:"grid-column:1/-1;white-space:normal;color:var(--muted)"})));
   kSearch();
 }
@@ -647,14 +682,37 @@ function kSearch(){
     box.append(el("div",{class:"res"+(at?" in":"")+(kFlash===s.no?" flash":"")},
       el("span",{class:"rn",textContent:s.no}),
       el("span",{class:"rt"}, el("b",{textContent:s.name}), el("span",{textContent:s.branch})),
-      at ? el("span",{class:"tag",textContent:"Hadir · "+fmtT(at)}) : null,
+      at ? el("span",{class:"tag",textContent:"Hadir · "+fmtT(at)+(S.hInfo.get(s.no)?.pic?" · "+S.hInfo.get(s.no).pic:"")}) : null,
       at ? el("button",{class:"undo",textContent:"Batal",onclick:()=>kUndo(s)}) : el("button",{class:"btn ok",textContent:"Hadir",onclick:()=>kDo(s)})));
   });
   if(hits.length>kHits.length) box.append(el("div",{class:"note",textContent:`${hits.length-kHits.length} lagi padanan. Taip lebih spesifik.`}));
 }
+/* Setiap kehadiran disahkan oleh PIC kaunter: pilih nama (atau tekan 1–9) */
+async function myPics(){
+  if(SB){ try{ const {data}=await SB.from("app_roles").select("pics").maybeSingle(); if(data?.pics) S.pics=data.pics; }catch(e){} }
+  return S.pics||[];
+}
+function choosePic(s, pics){
+  return new Promise(res=>{
+    $("picNo").textContent=s.no; $("picName").textContent=s.name; $("picBr").textContent=s.branch||"";
+    const box=$("picBtns"); box.textContent="";
+    const done=v=>{ $("picOv").hidden=true; document.removeEventListener("keydown",keys,true); $("kInput").focus(); res(v); };
+    const keys=e=>{ if(e.key==="Escape"){ e.preventDefault(); done(null); } const n=+e.key; if(n>=1 && n<=pics.length){ e.preventDefault(); done(pics[n-1]); } };
+    pics.forEach((p,i)=>box.append(el("button",{class:"btn picBtn",onclick:()=>done(p)}, el("kbd",{textContent:i+1}), p)));
+    $("picCancel").onclick=()=>done(null);
+    document.addEventListener("keydown",keys,true);
+    $("picOv").hidden=false; box.firstChild?.focus();
+  });
+}
 async function kDo(s){
   if(S.hadir.has(s.no)) return;
-  if(await guarded(store.checkin(s.no), `${s.name} (${s.no}) hadir`)){
+  let pic="";
+  if(SB){
+    const pics=await myPics();
+    if(!pics.length){ if(S.role==="hr") return toast("Tiada nama PIC untuk kaunter ini. Minta MASTER tambah nama PIC di Tetapan.", true); pic="MASTER"; }
+    else { pic=await choosePic(s, pics); if(!pic) return; }
+  }
+  if(await guarded(store.checkin(s.no, pic), `${s.name} (${s.no}) hadir${pic?" · disahkan "+pic:""}`)){
     beep(988,.12,"sine",.08); kFlash=s.no; setTimeout(()=>{ kFlash=null; },1500);
     $("kInput").value=""; $("kInput").focus(); kSearch();
   }
@@ -678,9 +736,9 @@ function renderSettings(){
   // attendance table
   const q=$("hFind").value.trim().toLowerCase(); const body=$("hBody"); body.textContent="";
   const rows=[...S.hadir.entries()].sort((a,b)=>b[1]-a[1]).map(([no,at])=>({no,at,s:findStaff(no)||{}})).filter(r=>!q || r.no.toLowerCase().includes(q) || (r.s.name||"").toLowerCase().includes(q));
-  rows.slice(0,300).forEach(r=>body.append(el("tr",null, el("td",{class:"num",textContent:r.no}), el("td",{textContent:r.s.name||"—"}), el("td",{textContent:r.s.branch||""}), el("td",{textContent:fmtT(r.at)}),
+  rows.slice(0,300).forEach(r=>body.append(el("tr",null, el("td",{class:"num",textContent:r.no}), el("td",{textContent:r.s.name||"—"}), el("td",{textContent:r.s.branch||""}), el("td",{textContent:fmtT(r.at)}), el("td",{textContent:S.hInfo.get(r.no)?.pic||"—"}), el("td",{textContent:idOf(S.hInfo.get(r.no)?.kaunter)||"—"}),
     el("td",null, el("button",{class:"btn small",textContent:"Buang",onclick:async()=>{ if(await confirmBox(`Buang ${r.no} dari senarai hadir?`, r.s.name||"", "Buang")) guarded(store.uncheck(r.no), "Dibuang"); }})))));
-  if(!rows.length) body.append(el("tr",null, el("td",{colSpan:5,textContent: S.hadir.size?"Tiada padanan.":"Belum ada sesiapa mendaftar. Kehadiran akan muncul di sini."})));
+  if(!rows.length) body.append(el("tr",null, el("td",{colSpan:7,textContent: S.hadir.size?"Tiada padanan.":"Belum ada sesiapa mendaftar. Kehadiran akan muncul di sini."})));
   // results
   const rb=$("rBody"); rb.textContent="";
   const res=[...S.state.winners.map(w=>({...w,st:"Menang"})), ...S.state.forfeited.map(w=>({...w,st:"Tiada sahutan"}))].sort((a,b)=>a.at-b.at);
@@ -748,7 +806,7 @@ async function save(name, rows){
   if(!dl){ const a=el("a",{href:URL.createObjectURL(new Blob([data],{type:"text/csv;charset=utf-8"})),download:name}); document.body.append(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1000); return; }
   try{ await dl.save({filename:name, data}); }catch(e){ if(e?.code!=="declined") toast("Fail tidak dapat dimuat turun.", true); }
 }
-$("expH").onclick=()=>save("kehadiran.csv", [["No Staf","Nama","Cawangan","Masa"], ...[...S.hadir.entries()].sort((a,b)=>a[1]-b[1]).map(([no,at])=>{ const s=findStaff(no)||{}; return [no,s.name,s.branch,new Date(at).toLocaleString("ms-MY")]; })]);
+$("expH").onclick=()=>save("kehadiran.csv", [["No Staf","Nama","Cawangan","Masa Daftar","Disahkan PIC","Kaunter"], ...[...S.hadir.entries()].sort((a,b)=>a[1]-b[1]).map(([no,at])=>{ const s=findStaff(no)||{}, h=S.hInfo.get(no)||{}; return [no,s.name,s.branch,new Date(at).toLocaleString("ms-MY"),h.pic||"",idOf(h.kaunter)]; })]);
 $("expR").onclick=()=>save("keputusan-cabutan.csv", [["Hadiah","No Staf","Nama","Cawangan","Status","Masa"], ...[...S.state.winners.map(w=>({...w,st:"Menang"})), ...S.state.forfeited.map(w=>({...w,st:"Tiada sahutan (3 panggilan)"}))].sort((a,b)=>a.at-b.at).map(w=>[w.prize,w.no,w.name,w.branch,w.st,new Date(w.at).toLocaleString("ms-MY")])]);
 
 route(); renderAll(); renderCfgEdit();
