@@ -104,6 +104,9 @@ button,input,select{font:inherit;color:inherit}
 .res .rt b{display:block;font-size:16px;overflow-wrap:anywhere}
 .res .rt span{color:var(--muted);font-size:13px}
 .res .tag{font-size:13px;color:var(--ok);font-weight:700;white-space:nowrap}
+.res .tag.dup{color:var(--lamp);text-align:right;white-space:normal;max-width:300px}
+.res .tag.dup small{display:block;color:var(--muted);font-weight:500;font-size:12px}
+.res.in{border-color:rgba(255,200,69,.45)}
 .res .btn.ok{padding:10px 22px;font-size:15px}
 .res .undo{background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:13px;padding:4px}
 .recent{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px;min-height:0}
@@ -352,7 +355,9 @@ const fmtT = t => new Date(t).toLocaleTimeString("ms-MY",{hour:"2-digit",minute:
 function el(tag, props, ...kids){ const e=document.createElement(tag); if(props) for(const k in props){ if(k==="class") e.className=props[k]; else if(k.startsWith("on")) e.addEventListener(k.slice(2),props[k]); else e[k]=props[k]; } for(const k of kids) if(k!=null) e.append(k); return e; }
 let toastT;
 function toast(msg, err){ document.querySelector(".toast")?.remove(); const t=el("div",{class:"toast"+(err?" err":""),textContent:msg}); document.body.append(t); clearTimeout(toastT); toastT=setTimeout(()=>t.remove(), 3200); }
-function confirmBox(txt, sub, yes="Ya"){ return new Promise(res=>{ $("cfTxt").textContent=txt; $("cfSub").textContent=sub||""; $("cfYes").textContent=yes; $("cfOv").hidden=false; const done=v=>{ $("cfOv").hidden=true; $("cfYes").onclick=$("cfNo").onclick=null; res(v); }; $("cfYes").onclick=()=>done(true); $("cfNo").onclick=()=>done(false); $("cfYes").focus(); }); }
+function alertBox(txt, sub){ return new Promise(res=>{ $("cfTxt").textContent=txt; $("cfSub").textContent=sub||""; $("cfYes").textContent="OK"; $("cfNo").hidden=true; $("cfOv").hidden=false;
+  $("cfYes").onclick=()=>{ $("cfOv").hidden=true; $("cfNo").hidden=false; $("cfYes").onclick=null; res(); }; $("cfYes").focus(); }); }
+function confirmBox(txt, sub, yes="Ya"){ return new Promise(res=>{ $("cfNo").hidden=false; $("cfTxt").textContent=txt; $("cfSub").textContent=sub||""; $("cfYes").textContent=yes; $("cfOv").hidden=false; const done=v=>{ $("cfOv").hidden=true; $("cfYes").onclick=$("cfNo").onclick=null; res(v); }; $("cfYes").onclick=()=>done(true); $("cfNo").onclick=()=>done(false); $("cfYes").focus(); }); }
 function findStaff(q){ const n=norm(q); return S.map.get(n) || S.map.get(stripZ(n)) || null; }
 function used(){ const u=new Set(); S.state.winners.forEach(w=>u.add(w.no)); S.state.forfeited.forEach(w=>u.add(w.no)); return u; }
 function eligible(){ const u=used(); return [...S.hadir.keys()].filter(no=>!u.has(no)).sort(nsort); }
@@ -429,8 +434,12 @@ function makeSupa(sb){
       for(let i=0;i<gone.length;i+=200) chk(await sb.from("staff").delete().in("no",gone.slice(i,i+200)));
       await loaders.staff();
     },
-    async checkin(no, pic){ chk(await sb.from("hadir").upsert({no, pic:pic||""},{onConflict:"no",ignoreDuplicates:true})); if(!hadir.has(no)){ hadir.set(no,{at:Date.now(),pic:pic||"",kaunter:S.me||""}); pushHadir(); } },
-    async uncheck(no){ chk(await sb.from("hadir").delete().eq("no",no)); hadir.delete(no); pushHadir(); },
+    async checkin(no, pic){
+      const {error}=await sb.from("hadir").insert({no, pic:pic||""});
+      if(error?.code==="23505"){ await loaders.hadir(); const e=new Error("sudah hadir"); e.code="dup"; throw e; } // kaunter lain daftar dahulu
+      chk({error}); if(!hadir.has(no)){ hadir.set(no,{at:Date.now(),pic:pic||"",kaunter:S.me||""}); pushHadir(); } },
+    async uncheck(no){ const {data,error}=await sb.from("hadir").delete().eq("no",no).select("no"); chk({error});
+      if(!data?.length){ const e=new Error("tiada kebenaran"); e.code="42501"; throw e; } hadir.delete(no); pushHadir(); },
     async resetHadir(){ chk(await sb.from("hadir").delete().neq("no","")); hadir.clear(); pushHadir(); },
     async saveState(s){ chk(await sb.from("draw_state").upsert({id:1,data:s})); subs.state?.(s); },
     async saveCfg(c){ chk(await sb.from("config").upsert({id:1,data:c})); subs.cfg?.(c); } };
@@ -682,8 +691,8 @@ function kSearch(){
     box.append(el("div",{class:"res"+(at?" in":"")+(kFlash===s.no?" flash":"")},
       el("span",{class:"rn",textContent:s.no}),
       el("span",{class:"rt"}, el("b",{textContent:s.name}), el("span",{textContent:s.branch})),
-      at ? el("span",{class:"tag",textContent:"Hadir · "+fmtT(at)+(S.hInfo.get(s.no)?.pic?" · "+S.hInfo.get(s.no).pic:"")}) : null,
-      at ? el("button",{class:"undo",textContent:"Batal",onclick:()=>kUndo(s)}) : el("button",{class:"btn ok",textContent:"Hadir",onclick:()=>kDo(s)})));
+      at ? el("span",{class:"tag dup"}, "SUDAH HADIR", el("small",{textContent:dupNote(s.no)})) : null,
+      at ? (canUndo(s.no) ? el("button",{class:"undo",textContent:"Batal",onclick:()=>kUndo(s)}) : null) : el("button",{class:"btn ok",textContent:"Hadir",onclick:()=>kDo(s)})));
   });
   if(hits.length>kHits.length) box.append(el("div",{class:"note",textContent:`${hits.length-kHits.length} lagi padanan. Taip lebih spesifik.`}));
 }
@@ -704,20 +713,33 @@ function choosePic(s, pics){
     $("picOv").hidden=false; box.firstChild?.focus();
   });
 }
+/* Elak pendaftaran berganda: tunjuk siapa yang sudah daftarkan pekerja ini */
+function dupNote(no){ const at=S.hadir.get(no), h=S.hInfo.get(no)||{};
+  return ["Didaftar "+fmtT(at), h.kaunter&&("kaunter "+idOf(h.kaunter)), h.pic&&("disahkan "+h.pic)].filter(Boolean).join(" · "); }
+const canUndo=no=>S.role!=="hr" || !SB || S.hInfo.get(no)?.kaunter===S.me;
+async function showDup(s){
+  beep(220,.35,"square",.07);
+  await alertBox(`${s.name} (${s.no}) sudah hadir`, dupNote(s.no)+". Tidak perlu daftar semula.");
+  $("kInput").value=""; $("kInput").focus(); kSearch();
+}
 async function kDo(s){
-  if(S.hadir.has(s.no)) return;
+  if(S.hadir.has(s.no)) return showDup(s);
   let pic="";
   if(SB){
     const pics=await myPics();
     if(!pics.length){ if(S.role==="hr") return toast("Tiada nama PIC untuk kaunter ini. Minta MASTER tambah nama PIC di Tetapan.", true); pic="MASTER"; }
     else { pic=await choosePic(s, pics); if(!pic) return; }
+    if(S.hadir.has(s.no)) return showDup(s); // didaftar oleh kaunter lain semasa PIC dipilih
   }
-  if(await guarded(store.checkin(s.no, pic), `${s.name} (${s.no}) hadir${pic?" · disahkan "+pic:""}`)){
+  let dup=false;
+  const ok=await guarded(store.checkin(s.no, pic).catch(e=>{ if(e.code!=="dup") throw e; dup=true; }), "");
+  if(dup) return showDup(s);
+  if(ok){ toast(`${s.name} (${s.no}) hadir${pic?" · disahkan "+pic:""}`);
     beep(988,.12,"sine",.08); kFlash=s.no; setTimeout(()=>{ kFlash=null; },1500);
     $("kInput").value=""; $("kInput").focus(); kSearch();
   }
 }
-async function kUndo(s){ if(await confirmBox(`Batalkan kehadiran ${s.no}?`, s.name, "Batalkan")) guarded(store.uncheck(s.no), "Kehadiran dibatalkan"); }
+async function kUndo(s){ if(!canUndo(s.no)) return toast("Hanya kaunter yang mendaftar boleh membatalkan.", true); if(await confirmBox(`Batalkan kehadiran ${s.no}?`, s.name+" · "+dupNote(s.no), "Batalkan")) guarded(store.uncheck(s.no), "Kehadiran dibatalkan"); }
 $("kInput").addEventListener("input", kSearch);
 $("kInput").addEventListener("keydown", e=>{
   if(e.key==="Escape"){ $("kInput").value=""; kSearch(); return; }
@@ -727,7 +749,8 @@ $("kInput").addEventListener("keydown", e=>{
   if(exact && !S.hadir.has(exact.no)) kDo(exact);
   else if(pending.length===1 && kHits.length===1) kDo(pending[0]);
   else if(kHits.length>1) toast("Lebih daripada satu nama. Tekan butang Hadir pada nama yang betul.");
-  else if(exact) toast(`${exact.name} sudah hadir.`);
+  else if(exact) showDup(exact);
+  else if(kHits.length===1) showDup(kHits[0]);
 });
 
 /* ---------- SETTINGS ---------- */
