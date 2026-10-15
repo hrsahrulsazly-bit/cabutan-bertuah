@@ -261,6 +261,22 @@ td.num{font-variant-numeric:tabular-nums;font-weight:700;color:var(--lamp)}
           </div>
           <div class="note">HR buka paparan <b>Daftar hadir</b> di kaunter, dan paparan <b>Cabutan</b> pada laptop yang disambung ke projektor. PC cawangan buka link yang sama dan log masuk dengan ID <b>HR</b>: mereka hanya boleh daftar hadir, dan kehadiran muncul serta-merta di papan cabutan.</div>
         </div>
+
+        <div class="box" id="hrBox" hidden>
+          <h3>ID HR cawangan</h3>
+          <p>Cipta ID untuk staf HR di setiap cawangan. ID HR hanya boleh buka <b>Daftar hadir</b>.</p>
+          <form id="hrForm" autocomplete="off">
+            <div class="row">
+              <div class="field"><label class="label" for="hrId">ID</label><input id="hrId" placeholder="cth. HR-KL" autocomplete="off" required></div>
+              <div class="field"><label class="label" for="hrPw">Kata laluan</label><input id="hrPw" type="password" autocomplete="new-password" minlength="6" placeholder="Min. 6 aksara" required></div>
+            </div>
+            <div class="row" style="margin-top:8px">
+              <button class="btn small lamp" type="submit" id="hrCreate">Cipta ID HR</button>
+              <button class="btn small" type="button" id="hrPass">Tukar kata laluan</button>
+            </div>
+          </form>
+          <div class="tbl-wrap"><table><thead><tr><th>ID</th><th>Log masuk terakhir</th><th></th></tr></thead><tbody id="hrBody"></tbody></table></div>
+        </div>
       </div>
     </div>
   </section>
@@ -428,6 +444,31 @@ async function startSupa(sb, session){
   $("loginOv").hidden=true;
   applyRole(data.role, data.role==="hr" ? "HR" : "MASTER");
   wire(makeSupa(sb));
+  if(data.role==="master") initHrAdmin(sb);
+}
+/* MASTER: urus ID HR cawangan melalui fungsi SQL hr_* (supabase-hr-ids.sql) */
+function initHrAdmin(sb){
+  $("hrBox").hidden=false;
+  const idOf=email=>email.replace(/@award\.local$/,"").toUpperCase();
+  const fmtD=t=>t ? new Date(t).toLocaleString("ms-MY",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}) : "Belum pernah";
+  const errMsg=e=>/hr_list|hr_create|schema cache/i.test(e?.message||"") ? "Fungsi ID HR belum dipasang. Jalankan supabase-hr-ids.sql di Supabase." : (e?.message||"Gagal. Cuba lagi.");
+  const rpc=async(fn,args)=>{ const {data,error}=await sb.rpc(fn,args); if(error) throw new Error(errMsg(error)); return data; };
+  async function load(){
+    const body=$("hrBody"); body.textContent="";
+    let rows; try{ rows=await rpc("hr_list"); }catch(e){ body.append(el("tr",null, el("td",{colSpan:3,textContent:e.message,style:"white-space:normal"}))); return; }
+    rows.forEach(r=>body.append(el("tr",null, el("td",{class:"num",textContent:idOf(r.email)}), el("td",{textContent:r.created_at?fmtD(r.last_sign_in_at):"Akaun tiada"}),
+      el("td",null, el("button",{class:"btn small",textContent:"Padam",onclick:async()=>{
+        if(!await confirmBox(`Padam ID ${idOf(r.email)}?`,"ID ini tidak lagi boleh log masuk.","Padam")) return;
+        try{ await rpc("hr_delete",{p_id:r.email}); toast(`ID ${idOf(r.email)} dipadam`); load(); }catch(e){ toast(e.message,true); } }})))));
+    if(!rows.length) body.append(el("tr",null, el("td",{colSpan:3,textContent:"Belum ada ID HR. Cipta di atas."})));
+  }
+  const take=()=>{ const id=$("hrId").value.trim(), pw=$("hrPw").value; if(!id||pw.length<6){ toast("Isi ID dan kata laluan (min. 6 aksara).",true); return null; } return {id,pw}; };
+  const done=msg=>{ toast(msg); $("hrPw").value=""; $("hrId").value=""; load(); };
+  $("hrForm").onsubmit=async e=>{ e.preventDefault(); const v=take(); if(!v) return;
+    try{ await rpc("hr_create",{p_id:v.id,p_password:v.pw}); done(`ID ${v.id.toUpperCase()} dicipta. Log masuk dengan ID dan kata laluan ini.`); }catch(err){ toast(err.message,true); } };
+  $("hrPass").onclick=async()=>{ const v=take(); if(!v) return;
+    try{ await rpc("hr_set_password",{p_id:v.id,p_password:v.pw}); done(`Kata laluan ID ${v.id.toUpperCase()} ditukar.`); }catch(err){ toast(err.message,true); } };
+  load();
 }
 function showLogin(sb, msg){
   setMode(false,"Belum log masuk"); $("loginOv").hidden=false; $("lErr").textContent=msg||""; $("lPw").value=""; setTimeout(()=>$("lId").focus(),50);
