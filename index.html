@@ -170,6 +170,9 @@ td.num{font-variant-numeric:tabular-nums;font-weight:700;color:var(--lamp)}
 @keyframes celPop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
 @keyframes celGlow{from{filter:drop-shadow(0 0 18px var(--lamp-glow))}to{filter:drop-shadow(0 0 46px var(--lamp-glow))}}
 @media (prefers-reduced-motion:reduce){.celebrate.show .cel-card,.celebrate.show .cel-title{animation:none}}
+#sResults table input{width:100%;min-width:110px;background:var(--ink);border:1px solid var(--lamp);border-radius:6px;padding:5px 7px}
+#sResults td.act{white-space:nowrap;text-align:right}
+#sResults td.act .btn{margin-left:4px}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--panel-2);border:1px solid var(--line);padding:10px 16px;border-radius:10px;z-index:40;font-weight:600;max-width:calc(100% - 32px)}
 .toast.err{border-color:var(--bad);color:var(--bad)}
 
@@ -254,6 +257,9 @@ td.num{font-variant-numeric:tabular-nums;font-weight:700;color:var(--lamp)}
             </div>
             <button class="btn small" id="aSave" style="margin-top:8px">Add</button>
           </details>
+          <div class="field"><label class="label" for="sFind">Find staff to edit or delete</label><input id="sFind" placeholder="Name or staff no." autocomplete="off"></div>
+          <div id="sResults"></div>
+          <div class="row"><button class="btn small bad" id="sClear">Clear all staff</button></div>
         </div>
 
         <div class="box">
@@ -464,6 +470,10 @@ function makeSupa(sb){
       for(let i=0;i<gone.length;i+=200) chk(await sb.from("staff").delete().in("no",gone.slice(i,i+200)));
       await loaders.staff();
     },
+    async saveOneStaff(no, name, branch){ chk(await sb.from("staff").upsert({no,name,branch})); await loaders.staff(); },
+    async deleteStaff(no){ const {data,error}=await sb.from("staff").delete().eq("no",no).select("no"); chk({error});
+      if(!data?.length){ const e=new Error("not permitted"); e.code="42501"; throw e; } await loaders.staff(); },
+    async clearStaff(){ chk(await sb.from("staff").delete().neq("no","")); await loaders.staff(); },
     async checkin(no, pic){
       const {error}=await sb.from("hadir").insert({no, pic:pic||""});
       if(error?.code==="23505"){ await loaders.hadir(); const e=new Error("already checked in"); e.code="dup"; throw e; } // kaunter lain daftar dahulu
@@ -847,7 +857,7 @@ $("kInput").addEventListener("keydown", e=>{
 
 /* ---------- SETTINGS ---------- */
 function renderSettings(){
-  $("sCount").textContent=S.staff.length; $("hCount").textContent=S.hadir.size;
+  $("sCount").textContent=S.staff.length; $("hCount").textContent=S.hadir.size; renderStaffFind();
   // attendance table
   const q=$("hFind").value.trim().toLowerCase(); const body=$("hBody"); body.textContent="";
   const rows=[...S.hadir.entries()].sort((a,b)=>b[1]-a[1]).map(([no,at])=>({no,at,s:findStaff(no)||{}})).filter(r=>!q || r.no.toLowerCase().includes(q) || (r.s.name||"").toLowerCase().includes(q));
@@ -903,6 +913,55 @@ $("fileIn").onchange=async e=>{
       el("div",{class:"row"}, el("button",{class:"btn lamp small",textContent:`Save ${list.length} staff`,onclick:async()=>{ pv.textContent="Saving…"; if(await guarded(store.saveStaff(list),"Staff list saved")) pv.textContent=""; e.target.value=""; }}),
         el("button",{class:"btn small",textContent:"Cancel",onclick:()=>{ pv.textContent=""; e.target.value=""; }})));
   }catch(err){ console.warn(err); pv.textContent=""; toast("Couldn't read the file. Use .xlsx or .csv.", true); }
+};
+/* Staff list admin: search, edit name/branch, delete one, clear all. Staff no. is the key used by
+   attendance and winners, so it is not editable here (delete and add again to change it). */
+let sEdit=null; // {no,name,branch} while a row is being edited
+function staffUsage(no){ const u=[]; if(S.hadir.has(no)) u.push("checked in"); if(S.state.winners.some(w=>w.no===no)) u.push("a winner"); return u; }
+function renderStaffFind(){
+  const box=$("sResults"); if(!box) return;
+  if(sEdit && box.contains(document.activeElement)) return; // don't wipe what MASTER is typing
+  const q=$("sFind").value.trim(); box.textContent="";
+  if(!q){ if(S.staff.length) box.append(el("div",{class:"note",textContent:`Type a name or staff no. to find one of ${S.staff.length} staff.`})); return; }
+  const nq=norm(q), words=q.toLowerCase().split(/\s+/).filter(Boolean);
+  const hits=S.staff.filter(x=>x.no.startsWith(nq) || stripZ(x.no).startsWith(stripZ(nq)) || words.every(w=>x.name.toLowerCase().includes(w)));
+  if(!hits.length){ box.append(el("div",{class:"note",textContent:"No staff match."})); return; }
+  const tb=el("tbody");
+  hits.slice(0,25).forEach(x=>{
+    if(sEdit?.no===x.no){
+      const n=el("input",{value:sEdit.name,oninput:e=>sEdit.name=e.target.value}), b=el("input",{value:sEdit.branch,oninput:e=>sEdit.branch=e.target.value});
+      n.setAttribute("aria-label","Name"); b.setAttribute("aria-label","Branch");
+      const key=e=>{ if(e.key==="Enter") saveStaffEdit(); if(e.key==="Escape"){ sEdit=null; renderStaffFind(); } };
+      n.addEventListener("keydown",key); b.addEventListener("keydown",key);
+      tb.append(el("tr",null, el("td",{class:"num",textContent:x.no}), el("td",null,n), el("td",null,b),
+        el("td",{class:"act"}, el("button",{class:"btn small lamp",textContent:"Save",onclick:saveStaffEdit}), el("button",{class:"btn small",textContent:"Cancel",onclick:()=>{ sEdit=null; renderStaffFind(); }}))));
+      setTimeout(()=>n.focus(),0);
+    } else {
+      tb.append(el("tr",null, el("td",{class:"num",textContent:x.no}), el("td",{textContent:x.name}), el("td",{textContent:x.branch}),
+        el("td",{class:"act"}, el("button",{class:"btn small",textContent:"Edit",onclick:()=>{ sEdit={no:x.no,name:x.name,branch:x.branch}; renderStaffFind(); }}),
+          el("button",{class:"btn small bad",textContent:"Delete",onclick:()=>deleteOneStaff(x)}))));
+    }
+  });
+  box.append(el("div",{class:"tbl-wrap"}, el("table",null, el("thead",null, el("tr",null, el("th",{textContent:"No"}), el("th",{textContent:"Name"}), el("th",{textContent:"Branch"}), el("th"))), tb)));
+  if(hits.length>25) box.append(el("div",{class:"note",textContent:`${hits.length-25} more matches. Type something more specific.`}));
+}
+async function saveStaffEdit(){
+  const e=sEdit; if(!e) return; const name=e.name.trim(), branch=e.branch.trim();
+  if(!name) return toast("Name can't be empty.", true);
+  const ok=await guarded(store.saveOneStaff ? store.saveOneStaff(e.no,name,branch)
+    : store.saveStaff(S.staff.map(x=>x.no===e.no?[x.no,name,branch]:[x.no,x.name,x.branch])), `${e.no} updated`);
+  if(ok){ sEdit=null; renderStaffFind(); }
+}
+async function deleteOneStaff(x){
+  const used=staffUsage(x.no);
+  if(!await confirmBox(`Delete ${x.name} (${x.no}) from the staff list?`, used.length ? `This person is ${used.join(" and ")}. Those records are kept but will show no name.` : "They will no longer appear in Check-in search.", "Delete")) return;
+  if(await guarded(store.deleteStaff ? store.deleteStaff(x.no) : store.saveStaff(S.staff.filter(y=>y.no!==x.no).map(y=>[y.no,y.name,y.branch])), `${x.no} deleted`)){ if(sEdit?.no===x.no) sEdit=null; renderStaffFind(); }
+}
+$("sFind").addEventListener("input", ()=>{ sEdit=null; renderStaffFind(); });
+$("sClear").onclick=async()=>{
+  if(!S.staff.length) return toast("The staff list is already empty.");
+  if(!await confirmBox(`Clear all ${S.staff.length} staff?`, "The whole staff list is deleted. Attendance and draw results are kept, but will show no names until you import the list again.", "Clear all staff")) return;
+  if(await guarded(store.clearStaff ? store.clearStaff() : store.saveStaff([]), "Staff list cleared")){ sEdit=null; $("sFind").value=""; renderStaffFind(); }
 };
 $("aSave").onclick=()=>{
   const no=norm($("aNo").value), name=$("aName").value.trim(), br=$("aBranch").value.trim();
