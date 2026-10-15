@@ -553,7 +553,7 @@ function wire(st){
   st.on("hadir", m2=>{ S.hadir=m2; renderAll(); });
   let seenWins=null; // celebrate only winners added after this screen loaded
   st.on("state", s=>{ S.state={winners:s.winners||[],forfeited:s.forfeited||[],cur:s.cur||null}; renderAll(); syncCur();
-    const n=S.state.winners.length; if(seenWins!==null && n>seenWins) celebrate(S.state.winners[n-1]); seenWins=n; });
+    const n=S.state.winners.length; if(seenWins!==null && n>seenWins) celebrate(S.state.winners[n-1]); seenWins=n; stateBooted=true; });
   st.on("cfg", c=>{ S.cfg={title:c.title||DEFAULT_CFG.title, prizes:(c.prizes&&c.prizes.length)?c.prizes:DEFAULT_CFG.prizes}; renderAll(); renderCfgEdit(); });
 }
 /* ---------- roles: MASTER = semua paparan; HR = daftar hadir sahaja ---------- */
@@ -759,14 +759,17 @@ function runSpin(pool, remaining, spectator){
       let pick=pool[rnd(pool.length)]; if(pool.length>2) while(lit && tileEls.get(pick)===lit) pick=pool[rnd(pool.length)];
       lit=tileEls.get(pick); lit?.classList.add("lit"); beep(880+rnd(5)*40,.04); i++;
     }
-    if(el2>=TOTAL){ lit?.classList.remove("lit"); cd.hidden=true; $("board").classList.remove("spinning");
-      if(spectator && S.state.cur?.no!==cand.no){ phase="idle"; cand=null; renderDraw(); return syncCur(); } // tab tertidur: cabutan sudah berubah
-      landed(); return; }
+    if(el2>=TOTAL){ lit?.classList.remove("lit"); cd.hidden=true;
+      if(spectator) return spectatorSpinDone();
+      $("board").classList.remove("spinning"); landed(); return; }
     requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);
 }
 function landed(){
+  stopWait(); spectating=false; $("board").classList.remove("spinning"); $("countdown").hidden=true;
+  const c=S.state.cur;
+  if(S.role!=="hr" && c && c.no===cand.no && !c.revealed) guarded(store.saveState({winners:S.state.winners, forfeited:S.state.forfeited, cur:{...c, revealed:true}}));
   phase="announce"; const t=tileEls.get(cand.no); t?.classList.add("win"); t?.scrollIntoView?.({block:"nearest"}); fanfare();
   setTimeout(showWinner, 1100);
 }
@@ -784,22 +787,38 @@ function updCalls(){
    (or a second screen on #cabutan) brings the overlay back once the 10 s spin would have ended. */
 const SPIN_MS=10000; let curTimer=null;
 function saveCur(){ const {no,name,branch,prize}=cand; guarded(store.saveState({winners:S.state.winners, forfeited:S.state.forfeited, cur:{no,name,branch,prize,calls,started:Date.now()}})); }
+/* Other screens (HR phones, a refreshed MASTER) follow the draw in draw_state.cur. They never reveal before
+   MASTER: an HR screen keeps the lights running until MASTER writes cur.revealed. Device clocks are only used
+   to estimate how far a draw already got when a screen joins it part-way. */
+let spectating=false, waitIv=null, waitTimer=null, stateBooted=false, waitLit=null;
+function stopWait(){ clearInterval(waitIv); clearTimeout(waitTimer); waitIv=waitTimer=null; waitLit?.classList.remove("lit"); waitLit=null; }
+function abortSpectate(){ stopWait(); spectating=false; $("board").classList.remove("spinning"); $("countdown").hidden=true; $("winOv").hidden=true; phase="idle"; cand=null; renderDraw(); }
+function spectatorSpinDone(){
+  const c=S.state.cur;
+  if(!c || c.no!==cand.no){ abortSpectate(); return syncCur(); }   // draw changed while this tab slept
+  if(c.revealed || S.role!=="hr") return landed();                   // MASTER already revealed (or this is MASTER)
+  const pool=[...tileEls.keys()];                                    // keep the lights going until MASTER reveals
+  waitIv=setInterval(()=>{ waitLit?.classList.remove("lit"); waitLit=tileEls.get(pool[rnd(pool.length)]); waitLit?.classList.add("lit"); }, 380);
+  waitTimer=setTimeout(()=>{ if(phase==="spin" && spectating) landed(); }, 20000); // MASTER offline: don't hang
+}
 function syncCur(){
   const c=S.state.cur;
-  if(!c){ clearTimeout(curTimer); if(phase==="announce"){ $("winOv").hidden=true; phase="idle"; cand=null; renderDraw(); } return; }
-  if(phase==="spin") return;
+  if(!c){ clearTimeout(curTimer); if(phase==="announce" || (phase==="spin" && spectating)) abortSpectate(); return; }
+  if(phase==="spin"){
+    if(!spectating) return;                                          // MASTER's own spin
+    if(cand?.no!==c.no){ abortSpectate(); return syncCur(); }
+    if(c.revealed && waitIv) landed();                               // waiting screen: MASTER just revealed
+    return;
+  }
   if(phase==="announce" && cand?.no===c.no){ if((c.calls||0)!==calls){ calls=c.calls||0; updCalls(); } return; }
   clearTimeout(curTimer);
+  if($("v-cabutan").hidden) return;                                  // route() calls syncCur when the board is shown
+  cand={no:c.no,name:c.name,branch:c.branch,prize:c.prize}; calls=c.calls||0;
+  if(c.revealed || !eligible().includes(c.no)){ phase="announce"; renderDraw(); return showWinner(); }
   const left=(c.started||0)+SPIN_MS-Date.now();
-  if(left>800 && left<=SPIN_MS+2000 && !$("v-cabutan").hidden && eligible().includes(c.no)){ // skrin lain: tonton lampu berlari
-    renderDraw(); cand={no:c.no,name:c.name,branch:c.branch,prize:c.prize}; calls=c.calls||0; phase="spin";
-    return runSpin(eligible(), left, true);
-  }
-  curTimer=setTimeout(()=>{
-    const c2=S.state.cur; if(!c2 || c2.no!==c.no || phase==="spin" || $("v-cabutan").hidden) return;
-    cand={no:c2.no,name:c2.name,branch:c2.branch,prize:c2.prize}; calls=c2.calls||0;
-    phase="announce"; renderDraw(); showWinner();
-  }, Math.max(0,(c.started||0)+SPIN_MS+1100-Date.now()));
+  const dur=stateBooted ? SPIN_MS : Math.min(SPIN_MS, Math.max(1500, left)); // live: full spin from now; joining: estimate
+  renderDraw(); phase="spin"; spectating=true;
+  runSpin(eligible(), dur, true);
 }
 $("wCall").onclick=()=>{ if(calls<3){ calls++; beep(660,.25,"sine",.12); setTimeout(()=>beep(660,.25,"sine",.12),300); updCalls();
   if(S.state.cur?.no===cand.no) guarded(store.saveState({winners:S.state.winners, forfeited:S.state.forfeited, cur:{...S.state.cur, calls}})); } };
