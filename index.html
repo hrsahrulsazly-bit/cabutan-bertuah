@@ -61,6 +61,8 @@ button,input,select{font:inherit;color:inherit}
 .countdown{position:absolute;right:18px;top:12px;font-family:var(--f-display);font-weight:900;font-size:64px;color:var(--lamp);text-shadow:0 0 24px var(--lamp-glow);line-height:1;font-variant-numeric:tabular-nums;z-index:3;pointer-events:none}
 
 .side{display:flex;flex-direction:column;gap:12px;min-height:0}
+body.viewer .draw{grid-template-columns:minmax(0,1fr)}
+body.viewer .side, body.viewer #winOv .actions{display:none}
 .go{font-family:var(--f-display);font-weight:900;font-size:40px;letter-spacing:.06em;text-transform:uppercase;padding:18px;border-radius:16px;background:var(--lamp);color:var(--ink);border:0;cursor:pointer;box-shadow:0 0 30px var(--lamp-soft)}
 .go:disabled{background:var(--panel-2);color:var(--muted);box-shadow:none;cursor:not-allowed}
 .go small{display:block;font-family:var(--f-body);font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:none;opacity:.75}
@@ -460,7 +462,8 @@ S.role="master"; S.me=""; S.pics=[]; S.hInfo=new Map(); let SB=null;
 const idOf=email=>String(email||"").replace(/@award.local$/,"").toUpperCase();
 function applyRole(role, label){
   S.role=role;
-  document.querySelectorAll(".nav a").forEach(a=>a.hidden = role==="hr" && a.dataset.v!=="daftar");
+  document.body.classList.toggle("viewer", role==="hr"); // HR: tonton cabutan sahaja
+  document.querySelectorAll(".nav a").forEach(a=>a.hidden = role==="hr" && a.dataset.v==="tetapan");
   if(label){ $("who").hidden=false; $("whoRole").textContent=label; }
   route();
 }
@@ -535,8 +538,8 @@ function showLogin(sb, msg){
 
 /* ---------- routing ---------- */
 function route(){
-  const v=(location.hash||"#cabutan").slice(1); let view=["cabutan","daftar","tetapan"].includes(v)?v:"cabutan";
-  if(S.role==="hr") view="daftar";
+  const v=(location.hash||(S.role==="hr"?"#daftar":"#cabutan")).slice(1); let view=["cabutan","daftar","tetapan"].includes(v)?v:"cabutan";
+  if(S.role==="hr" && view==="tetapan") view="daftar";
   ["cabutan","daftar","tetapan"].forEach(x=>$("v-"+x).hidden = x!==view);
   document.querySelectorAll(".nav a").forEach(a=>a.setAttribute("aria-current", a.dataset.v===view?"page":"false"));
   if(view==="daftar") setTimeout(()=>$("kInput").focus(),50);
@@ -593,17 +596,22 @@ function fanfare(){ [523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,.35,
 function rnd(n){ const a=new Uint32Array(1); crypto.getRandomValues(a); return a[0]%n; }
 
 function startDraw(){
-  if(phase!=="idle" || S.state.cur) return; const pi=nextPrize(); const pool=eligible();
+  if(phase!=="idle" || S.state.cur || S.role==="hr") return; const pi=nextPrize(); const pool=eligible();
   if(pi<0) return toast("Semua hadiah telah dimenangi.");
   if(!pool.length) return toast("Tiada peserta layak.", true);
   const winNo=pool[rnd(pool.length)];
   const s=findStaff(winNo)||{no:winNo,name:"",branch:""};
   cand={no:winNo,name:s.name,branch:s.branch,prize:S.cfg.prizes[pi]}; calls=0;
-  phase="spin"; saveCur(); renderDraw(); $("goBtn").disabled=true; $("board").classList.add("spinning");
-  const TOTAL=10000, sched=[]; let t=0;
+  phase="spin"; saveCur(); renderDraw(); runSpin(pool, SPIN_MS);
+}
+/* Lampu berlari. remaining < SPIN_MS bila skrin penonton menyertai cabutan yang sudah bermula. */
+function runSpin(pool, remaining, spectator){
+  $("goBtn").disabled=true; $("board").classList.add("spinning");
+  const TOTAL=SPIN_MS, sched=[]; let t=0;
   while(t<TOTAL-650){ sched.push(t); const p=t/TOTAL; t+=45+600*p*p*p; }
   const cd=$("countdown"); cd.hidden=false;
-  let lit=null, i=0; const t0=performance.now();
+  let lit=null, i=0; const t0=performance.now()-(TOTAL-Math.min(TOTAL,remaining));
+  while(i<sched.length && sched[i]<=TOTAL-remaining) i++;
   const frame=now=>{
     const el2=now-t0; cd.textContent=Math.max(0,Math.ceil((TOTAL-el2)/1000));
     while(i<sched.length && sched[i]<=el2){
@@ -611,7 +619,9 @@ function startDraw(){
       let pick=pool[rnd(pool.length)]; if(pool.length>2) while(lit && tileEls.get(pick)===lit) pick=pool[rnd(pool.length)];
       lit=tileEls.get(pick); lit?.classList.add("lit"); beep(880+rnd(5)*40,.04); i++;
     }
-    if(el2>=TOTAL){ lit?.classList.remove("lit"); cd.hidden=true; $("board").classList.remove("spinning"); landed(); return; }
+    if(el2>=TOTAL){ lit?.classList.remove("lit"); cd.hidden=true; $("board").classList.remove("spinning");
+      if(spectator && S.state.cur?.no!==cand.no){ phase="idle"; cand=null; renderDraw(); return syncCur(); } // tab tertidur: cabutan sudah berubah
+      landed(); return; }
     requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);
@@ -638,8 +648,13 @@ function syncCur(){
   const c=S.state.cur;
   if(!c){ clearTimeout(curTimer); if(phase==="announce"){ $("winOv").hidden=true; phase="idle"; cand=null; renderDraw(); } return; }
   if(phase==="spin") return;
-  if(phase==="announce" && cand?.no===c.no){ if((c.calls||0)>calls){ calls=c.calls; updCalls(); } return; }
+  if(phase==="announce" && cand?.no===c.no){ if((c.calls||0)!==calls){ calls=c.calls||0; updCalls(); } return; }
   clearTimeout(curTimer);
+  const left=(c.started||0)+SPIN_MS-Date.now();
+  if(left>800 && left<=SPIN_MS+2000 && !$("v-cabutan").hidden && eligible().includes(c.no)){ // skrin lain: tonton lampu berlari
+    renderDraw(); cand={no:c.no,name:c.name,branch:c.branch,prize:c.prize}; calls=c.calls||0; phase="spin";
+    return runSpin(eligible(), left, true);
+  }
   curTimer=setTimeout(()=>{
     const c2=S.state.cur; if(!c2 || c2.no!==c.no || phase==="spin" || $("v-cabutan").hidden) return;
     cand={no:c2.no,name:c2.name,branch:c2.branch,prize:c2.prize}; calls=c2.calls||0;
