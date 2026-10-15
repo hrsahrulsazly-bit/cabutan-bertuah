@@ -113,13 +113,15 @@ body.viewer .side, body.viewer #winOv .actions{display:none}
 .res .undo{background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:13px;padding:4px}
 .recent{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px;min-height:0}
 .recent ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;overflow:auto;min-height:0}
-.recent li{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--line);font-size:14px}
+.recent li{display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--line);font-size:14px}
 .recent li b{font-family:var(--f-display);color:var(--lamp);font-size:17px;font-variant-numeric:tabular-nums}
 .recent li span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .recent li span small{display:block;color:var(--muted);font-size:12px;white-space:normal}
 .picBtn{font-size:18px;padding:14px 20px;display:inline-flex;align-items:center;gap:10px;background:var(--ok);color:#06281a;border-color:var(--ok)}
 .picBtn kbd{font:700 13px var(--f-body);background:rgba(0,0,0,.18);border-radius:6px;padding:2px 7px}
 .recent li time{color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+.recent li .del{background:none;border:1px solid var(--bad);color:var(--bad);border-radius:6px;font-size:12px;font-weight:600;padding:2px 8px;cursor:pointer;align-self:center}
+.recent li .del:hover{background:var(--bad);color:var(--ink)}
 .res.flash{border-color:var(--ok);box-shadow:0 0 0 2px var(--ok) inset}
 @media (max-width:860px){.desk{grid-template-columns:1fr}}
 
@@ -689,7 +691,7 @@ function renderKiosk(){
   const rec=[...S.hadir.entries()].filter(([no])=>!mine || S.hInfo.get(no)?.kaunter===S.me).sort((a,b)=>b[1]-a[1]).slice(0,50);
   rec.forEach(([no,at])=>{ const s=findStaff(no)||{}, h=S.hInfo.get(no)||{};
     const sub=[s.branch, h.pic&&("Verified by "+h.pic), !mine&&h.kaunter&&("Counter "+idOf(h.kaunter))].filter(Boolean).join(" · ");
-    ol.append(el("li",null, el("b",{textContent:no}), el("span",null, s.name||"—", sub?el("small",{textContent:sub}):null), el("time",{textContent:fmtT(at)}))); });
+    ol.append(el("li",null, el("b",{textContent:no}), el("span",null, s.name||"—", sub?el("small",{textContent:sub}):null), el("time",{textContent:fmtT(at)}), canUndo(no) ? el("button",{class:"del",textContent:"Delete",title:"Wrong PIC? Delete and check in again",onclick:()=>kUndo(s.no?s:{no,name:"",branch:""})}) : el("span"))); });
   if(!rec.length) ol.append(el("li",null, el("span",{textContent:"No one has checked in yet. Checked-in names appear here.",style:"grid-column:1/-1;white-space:normal;color:var(--muted)"})));
   kSearch();
 }
@@ -709,7 +711,7 @@ function kSearch(){
       el("span",{class:"rn",textContent:s.no}),
       el("span",{class:"rt"}, el("b",{textContent:s.name}), el("span",{textContent:s.branch})),
       at ? el("span",{class:"tag dup"}, "ALREADY CHECKED IN", el("small",{textContent:dupNote(s.no)})) : null,
-      at ? (canUndo(s.no) ? el("button",{class:"undo",textContent:"Undo",onclick:()=>kUndo(s)}) : null) : el("button",{class:"btn ok",textContent:"Check in",onclick:()=>kDo(s)})));
+      at ? (canUndo(s.no) ? el("button",{class:"undo",textContent:"Delete",onclick:()=>kUndo(s)}) : null) : el("button",{class:"btn ok",textContent:"Check in",onclick:()=>kDo(s)})));
   });
   if(hits.length>kHits.length) box.append(el("div",{class:"note",textContent:`${hits.length-kHits.length} more matches. Type something more specific.`}));
 }
@@ -756,7 +758,14 @@ async function kDo(s){
     $("kInput").value=""; $("kInput").focus(); kSearch();
   }
 }
-async function kUndo(s){ if(!canUndo(s.no)) return toast("Only the counter that checked this person in can undo it.", true); if(await confirmBox(`Undo check-in for ${s.no}?`, s.name+" · "+dupNote(s.no), "Undo")) guarded(store.uncheck(s.no), "Check-in undone"); }
+/* Delete a check-in (e.g. the wrong PIC was chosen), then put the staff no. back in the search box to check in again */
+async function kUndo(s){
+  if(!canUndo(s.no)) return toast("Only the counter that checked this person in can delete it.", true);
+  if(!await confirmBox(`Delete check-in for ${s.name||s.no} (${s.no})?`, dupNote(s.no)+". You can check in again and choose the correct PIC.", "Delete")) return;
+  if(await guarded(store.uncheck(s.no), "Check-in deleted. Check in again with the correct PIC.")){
+    location.hash="#checkin"; $("kInput").value=s.no; $("kInput").focus(); kSearch();
+  }
+}
 $("kInput").addEventListener("input", kSearch);
 $("kInput").addEventListener("keydown", e=>{
   if(e.key==="Escape"){ $("kInput").value=""; kSearch(); return; }
