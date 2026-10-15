@@ -1,4 +1,4 @@
-<!doctype html><html lang="ms"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Award Recognition 2025</title>
 <script src="config.js?v=2"></script>
 <script src="vendor/supabase.min.js?v=2.45.4"></script>
@@ -165,13 +165,13 @@ td.num{font-variant-numeric:tabular-nums;font-weight:700;color:var(--lamp)}
 
 <div class="app">
   <header class="top">
-    <div class="brand"><small>Kumpulan Swis Resources Sdn Bhd · Cabutan Bertuah</small><span id="evTitle">Award Recognition 2025</span></div>
-    <span class="mode" id="mode"><i></i><span>Menyambung…</span></span>
-    <span class="who" id="who" hidden><b id="whoRole"></b><button class="btn small" id="logout">Log keluar</button></span>
-    <nav class="nav" aria-label="Paparan">
-      <a href="#cabutan" data-v="cabutan">Cabutan</a>
-      <a href="#daftar" data-v="daftar">Daftar hadir</a>
-      <a href="#tetapan" data-v="tetapan">Tetapan</a>
+    <div class="brand"><small>Kumpulan Swis Resources Sdn Bhd · Lucky Draw</small><span id="evTitle">Award Recognition 2025</span></div>
+    <span class="mode" id="mode"><i></i><span>Connecting…</span></span>
+    <span class="who" id="who" hidden><b id="whoRole"></b><button class="btn small" id="logout">Log out</button></span>
+    <nav class="nav" aria-label="Views">
+      <a href="#draw" data-v="cabutan">Lucky Draw</a>
+      <a href="#checkin" data-v="daftar">Check-in</a>
+      <a href="#settings" data-v="tetapan">Settings</a>
     </nav>
   </header>
 
@@ -180,22 +180,22 @@ td.num{font-variant-numeric:tabular-nums;font-weight:700;color:var(--lamp)}
     <div class="draw">
       <div class="stage">
         <div class="stage-head">
-          <h2 id="stageTitle">Nombor layak</h2>
-          <span class="count"><b id="eligCount">0</b> peserta hadir layak dicabut</span>
+          <h2 id="stageTitle">Eligible numbers</h2>
+          <span class="count"><b id="eligCount">0</b> attendees eligible for the draw</span>
         </div>
         <div class="board" id="board">
           <div class="tiles" id="tiles"></div>
           <div class="countdown" id="countdown" hidden></div>
-          <div class="empty" id="boardEmpty"><strong>Belum ada kehadiran</strong><span>Nombor staf akan muncul di sini sebaik sahaja pekerja mendaftar di kaunter.</span></div>
+          <div class="empty" id="boardEmpty"><strong>No attendees yet</strong><span>Staff numbers appear here as soon as employees check in at a counter.</span></div>
         </div>
       </div>
       <aside class="side">
-        <button class="go" id="goBtn">Mula<small id="goSub">Cabutan hadiah</small></button>
-        <div class="label">Senarai hadiah</div>
+        <button class="go" id="goBtn">Start<small id="goSub">Prize draw</small></button>
+        <div class="label">Prizes</div>
         <div class="prizes" id="prizeList"></div>
         <div class="side-tools">
-          <button class="btn small" id="soundBtn" aria-pressed="true">Bunyi: Hidup</button>
-          <button class="btn small" id="fsBtn">Skrin penuh</button>
+          <button class="btn small" id="soundBtn" aria-pressed="true">Sound: On</button>
+          <button class="btn small" id="fsBtn">Full screen</button>
         </div>
       </aside>
     </div>
@@ -205,14 +205,14 @@ td.num{font-variant-numeric:tabular-nums;font-weight:700;color:var(--lamp)}
   <section class="view" id="v-daftar" hidden>
     <div class="desk">
       <div class="desk-main">
-        <h1>Daftar hadir</h1>
-        <p class="lead">Cari nama atau no. staf, kemudian tekan <b>Hadir</b>. Tekan Enter untuk tandakan hadir jika hanya satu nama dijumpai.</p>
-        <div class="kInputWrap"><input id="kInput" autocomplete="off" inputmode="search" placeholder="Cari nama atau no. staf" aria-label="Cari nama atau no. staf"></div>
+        <h1>Check-in</h1>
+        <p class="lead">Search by name or staff no., then press <b>Check in</b>. Press Enter to check in when only one name matches.</p>
+        <div class="kInputWrap"><input id="kInput" autocomplete="off" inputmode="search" placeholder="Search name or staff no." aria-label="Search name or staff no."></div>
         <div class="results" id="kResults"></div>
       </div>
       <aside class="recent">
-        <div class="row"><span class="stat" id="kCount">0</span><span class="label">hadir daripada <span id="kTotal">0</span> staf</span></div>
-        <div class="label" id="kRecentLbl">Terkini didaftar</div>
+        <div class="row"><span class="stat" id="kCount">0</span><span class="label">checked in of <span id="kTotal">0</span> staff</span></div>
+        <div class="label" id="kRecentLbl">Recently checked in</div>
         <ol id="kRecent"></ol>
       </aside>
     </div>
@@ -223,68 +223,68 @@ td.num{font-variant-numeric:tabular-nums;font-weight:700;color:var(--lamp)}
     <div class="settings">
       <div class="grid2">
         <div class="box">
-          <h3>Senarai pekerja</h3>
-          <p>Import fail Excel atau CSV dengan lajur <b>No Staf</b>, <b>Nama</b> dan <b>Cawangan</b>. Import baharu akan menggantikan senarai lama.</p>
-          <div class="row"><span class="stat" id="sCount">0</span><span class="label">staf dalam senarai</span></div>
+          <h3>Staff list</h3>
+          <p>Import an Excel or CSV file with columns <b>Staff No</b>, <b>Name</b> and <b>Branch</b>. A new import replaces the old list.</p>
+          <div class="row"><span class="stat" id="sCount">0</span><span class="label">staff in list</span></div>
           <input type="file" id="fileIn" accept=".xlsx,.xls,.csv,.txt">
           <div id="importPrev"></div>
           <details>
-            <summary class="label" style="cursor:pointer">Tambah seorang staf</summary>
+            <summary class="label" style="cursor:pointer">Add one staff member</summary>
             <div class="row" style="margin-top:8px">
-              <div class="field"><label class="label" for="aNo">No staf</label><input id="aNo"></div>
-              <div class="field"><label class="label" for="aName">Nama</label><input id="aName"></div>
-              <div class="field"><label class="label" for="aBranch">Cawangan</label><input id="aBranch"></div>
+              <div class="field"><label class="label" for="aNo">Staff no.</label><input id="aNo"></div>
+              <div class="field"><label class="label" for="aName">Name</label><input id="aName"></div>
+              <div class="field"><label class="label" for="aBranch">Branch</label><input id="aBranch"></div>
             </div>
-            <button class="btn small" id="aSave" style="margin-top:8px">Tambah</button>
+            <button class="btn small" id="aSave" style="margin-top:8px">Add</button>
           </details>
         </div>
 
         <div class="box">
-          <h3>Majlis &amp; hadiah</h3>
-          <div class="field"><label class="label" for="cTitle">Nama majlis</label><input id="cTitle"></div>
-          <div class="label">Hadiah (dicabut ikut turutan ini)</div>
+          <h3>Event &amp; prizes</h3>
+          <div class="field"><label class="label" for="cTitle">Event name</label><input id="cTitle"></div>
+          <div class="label">Prizes (drawn in this order)</div>
           <div class="plist" id="pEdit"></div>
           <div class="row">
-            <button class="btn small" id="pAdd">+ Tambah hadiah</button>
-            <button class="btn small" id="pDel">− Buang terakhir</button>
-            <button class="btn small lamp" id="cSave">Simpan</button>
+            <button class="btn small" id="pAdd">+ Add prize</button>
+            <button class="btn small" id="pDel">− Remove last</button>
+            <button class="btn small lamp" id="cSave">Save</button>
           </div>
         </div>
 
         <div class="box">
-          <h3>Kehadiran</h3>
-          <div class="row"><span class="stat" id="hCount">0</span><span class="label">telah daftar</span></div>
-          <div class="field"><label class="label" for="hFind">Cari</label><input id="hFind" placeholder="Nama atau no staf"></div>
-          <div class="tbl-wrap"><table><thead><tr><th>No</th><th>Nama</th><th>Cawangan</th><th>Masa</th><th>Disahkan PIC</th><th>Kaunter</th><th></th></tr></thead><tbody id="hBody"></tbody></table></div>
-          <div class="row"><button class="btn small" id="expH">Muat turun CSV kehadiran</button></div>
+          <h3>Attendance</h3>
+          <div class="row"><span class="stat" id="hCount">0</span><span class="label">checked in</span></div>
+          <div class="field"><label class="label" for="hFind">Search</label><input id="hFind" placeholder="Name or staff no."></div>
+          <div class="tbl-wrap"><table><thead><tr><th>No</th><th>Name</th><th>Branch</th><th>Time</th><th>Verified by PIC</th><th>Counter</th><th></th></tr></thead><tbody id="hBody"></tbody></table></div>
+          <div class="row"><button class="btn small" id="expH">Download attendance CSV</button></div>
         </div>
 
         <div class="box">
-          <h3>Keputusan cabutan</h3>
-          <div class="tbl-wrap"><table><thead><tr><th>Hadiah</th><th>No</th><th>Nama</th><th>Cawangan</th><th>Status</th></tr></thead><tbody id="rBody"></tbody></table></div>
+          <h3>Draw results</h3>
+          <div class="tbl-wrap"><table><thead><tr><th>Prize</th><th>No</th><th>Name</th><th>Branch</th><th>Status</th></tr></thead><tbody id="rBody"></tbody></table></div>
           <div class="row">
-            <button class="btn small" id="expR">Muat turun CSV keputusan</button>
-            <button class="btn small bad" id="resetDraw">Set semula cabutan</button>
-            <button class="btn small bad" id="resetHadir">Kosongkan kehadiran</button>
+            <button class="btn small" id="expR">Download results CSV</button>
+            <button class="btn small bad" id="resetDraw">Reset draw</button>
+            <button class="btn small bad" id="resetHadir">Clear attendance</button>
           </div>
-          <div class="note">HR buka paparan <b>Daftar hadir</b> di kaunter, dan paparan <b>Cabutan</b> pada laptop yang disambung ke projektor. PC cawangan buka link yang sama dan log masuk dengan ID <b>HR</b>: mereka hanya boleh daftar hadir, dan kehadiran muncul serta-merta di papan cabutan.</div>
+          <div class="note">Open <b>Check-in</b> at the counters and <b>Lucky Draw</b> on the laptop connected to the projector. Branch PCs open the same link and log in with an <b>HR</b> ID: they can check people in and watch the draw, and every check-in appears on the draw board instantly.</div>
         </div>
 
         <div class="box" id="hrBox" hidden>
-          <h3>ID HR cawangan</h3>
-          <p>Cipta ID untuk setiap kaunter cawangan, dengan 3–4 nama PIC. ID HR hanya boleh buka <b>Daftar hadir</b>, dan setiap kehadiran mesti disahkan oleh salah seorang PIC kaunter itu.</p>
+          <h3>Branch HR IDs</h3>
+          <p>Create an ID for each branch counter, with 3–4 PIC names. HR IDs can use <b>Check-in</b> and watch the <b>Lucky Draw</b>, and every check-in must be verified by one of that counter's PICs.</p>
           <form id="hrForm" autocomplete="off">
             <div class="row">
-              <div class="field"><label class="label" for="hrId">ID</label><input id="hrId" placeholder="cth. HR-KL" autocomplete="off" required></div>
-              <div class="field"><label class="label" for="hrPw">Kata laluan</label><input id="hrPw" type="password" autocomplete="new-password" minlength="6" placeholder="Min. 6 aksara" required></div>
+              <div class="field"><label class="label" for="hrId">ID</label><input id="hrId" placeholder="e.g. HR-KL" autocomplete="off" required></div>
+              <div class="field"><label class="label" for="hrPw">Password</label><input id="hrPw" type="password" autocomplete="new-password" minlength="6" placeholder="Min. 6 characters" required></div>
             </div>
-            <div class="field" style="margin-top:8px"><label class="label" for="hrPics">Nama PIC kaunter ini (pisah dengan koma)</label><input id="hrPics" placeholder="cth. Ali, Siti, Kumar, Mei Ling"></div>
+            <div class="field" style="margin-top:8px"><label class="label" for="hrPics">PIC names for this counter (comma-separated)</label><input id="hrPics" placeholder="e.g. Ali, Siti, Kumar, Mei Ling"></div>
             <div class="row" style="margin-top:8px">
-              <button class="btn small lamp" type="submit" id="hrCreate">Cipta ID HR</button>
-              <button class="btn small" type="button" id="hrPass">Tukar kata laluan</button>
+              <button class="btn small lamp" type="submit" id="hrCreate">Create HR ID</button>
+              <button class="btn small" type="button" id="hrPass">Change password</button>
             </div>
           </form>
-          <div class="tbl-wrap"><table><thead><tr><th>ID</th><th>Nama PIC (pisah dengan koma)</th><th>Log masuk terakhir</th><th></th></tr></thead><tbody id="hrBody"></tbody></table></div>
+          <div class="tbl-wrap"><table><thead><tr><th>ID</th><th>PIC names (comma-separated)</th><th>Last login</th><th></th></tr></thead><tbody id="hrBody"></tbody></table></div>
         </div>
       </div>
     </div>
@@ -293,40 +293,40 @@ td.num{font-variant-numeric:tabular-nums;font-weight:700;color:var(--lamp)}
 
 <div class="overlay" id="winOv" hidden>
   <div class="card" role="dialog" aria-modal="true" aria-labelledby="wNo">
-    <div class="eyebrow" id="wPrize">Hadiah</div>
+    <div class="eyebrow" id="wPrize">Prize</div>
     <div class="bignum" id="wNo">0000</div>
-    <div class="wname" id="wName">Nama</div>
-    <div class="wbranch" id="wBranch">Cawangan</div>
+    <div class="wname" id="wName">Name</div>
+    <div class="wbranch" id="wBranch">Branch</div>
     <div class="calls" aria-hidden="true"><i></i><i></i><i></i></div>
-    <div class="calltxt" id="wCallTxt">Panggil nama pemenang. Selepas 3 panggilan tanpa sahutan, cabut semula.</div>
+    <div class="calltxt" id="wCallTxt">Call the winner's name. After 3 calls with no response, draw again.</div>
     <div class="actions">
-      <button class="btn lamp" id="wCall">Panggilan 1</button>
-      <button class="btn ok" id="wOk">Pemenang hadir</button>
-      <button class="btn bad" id="wNo3" disabled>Tiada sahutan · cabut semula</button>
+      <button class="btn lamp" id="wCall">Call 1</button>
+      <button class="btn ok" id="wOk">Winner is here</button>
+      <button class="btn bad" id="wNo3" disabled>No response · redraw</button>
     </div>
   </div>
 </div>
 
 <div class="overlay" id="loginOv" hidden>
   <form class="card login" id="loginForm" autocomplete="on">
-    <div class="eyebrow">Cabutan Bertuah</div>
-    <div class="wname">Log masuk</div>
-    <div class="field"><label class="label" for="lId">ID</label><input id="lId" name="username" autocomplete="username" placeholder="MASTER atau HR" required></div>
-    <div class="field"><label class="label" for="lPw">Kata laluan</label><input id="lPw" name="password" type="password" autocomplete="current-password" required></div>
+    <div class="eyebrow">Lucky Draw</div>
+    <div class="wname">Log in</div>
+    <div class="field"><label class="label" for="lId">ID</label><input id="lId" name="username" autocomplete="username" placeholder="MASTER or HR ID" required></div>
+    <div class="field"><label class="label" for="lPw">Password</label><input id="lPw" name="password" type="password" autocomplete="current-password" required></div>
     <div class="calltxt" id="lErr" role="alert"></div>
-    <div class="actions"><button class="btn lamp" id="lBtn" type="submit">Masuk</button></div>
+    <div class="actions"><button class="btn lamp" id="lBtn" type="submit">Log in</button></div>
   </form>
 </div>
 
 <div class="overlay" id="picOv" hidden>
   <div class="card" role="dialog" aria-modal="true" aria-labelledby="picTitle">
-    <div class="eyebrow" id="picTitle">Sahkan kehadiran</div>
+    <div class="eyebrow" id="picTitle">Verify check-in</div>
     <div class="bignum" id="picNo" style="font-size:clamp(48px,10vw,84px)"></div>
     <div class="wname" id="picName"></div>
     <div class="wbranch" id="picBr"></div>
-    <div class="calltxt" style="margin-top:18px">Pilih PIC yang mengesahkan kehadiran (atau tekan nombor):</div>
+    <div class="calltxt" style="margin-top:18px">Choose the PIC verifying this check-in (or press a number):</div>
     <div class="actions" id="picBtns"></div>
-    <div class="actions"><button class="btn" id="picCancel">Batal</button></div>
+    <div class="actions"><button class="btn" id="picCancel">Cancel</button></div>
   </div>
 </div>
 
@@ -334,14 +334,14 @@ td.num{font-variant-numeric:tabular-nums;font-weight:700;color:var(--lamp)}
   <div class="card" role="dialog" aria-modal="true">
     <div class="wname" id="cfTxt" style="font-size:22px"></div>
     <div class="wbranch" id="cfSub" style="font-size:15px"></div>
-    <div class="actions"><button class="btn" id="cfNo">Batal</button><button class="btn lamp" id="cfYes">Ya</button></div>
+    <div class="actions"><button class="btn" id="cfNo">Cancel</button><button class="btn lamp" id="cfYes">Yes</button></div>
   </div>
 </div>
 
 <script>
 (function(){
 const $ = id => document.getElementById(id);
-const DEFAULT_CFG = { title:"Award Recognition 2025", prizes:["Hadiah Ke-5","Hadiah Ke-4","Hadiah Ke-3","Hadiah Ke-2","Hadiah Utama"] };
+const DEFAULT_CFG = { title:"Award Recognition 2025", prizes:["5th Prize","4th Prize","3rd Prize","2nd Prize","Grand Prize"] };
 const SHARDS = 8, CHUNK = 1500;
 
 const S = { staff:[], map:new Map(), hadir:new Map(), state:{winners:[],forfeited:[]}, cfg:{...DEFAULT_CFG} };
@@ -353,13 +353,13 @@ const stripZ = v => v.replace(/^0+(?=.)/, "");
 const nsort = (a,b) => a.localeCompare(b, undefined, {numeric:true});
 const docId = no => "n" + no.replace(/[^A-Za-z0-9_\-.~:@+]/g, "_");
 const shardOf = no => { let h=0; for (const c of no) h = (h*31 + c.charCodeAt(0)) >>> 0; return h % SHARDS; };
-const fmtT = t => new Date(t).toLocaleTimeString("ms-MY",{hour:"2-digit",minute:"2-digit"});
+const fmtT = t => new Date(t).toLocaleTimeString("en-MY",{hour:"2-digit",minute:"2-digit"});
 function el(tag, props, ...kids){ const e=document.createElement(tag); if(props) for(const k in props){ if(k==="class") e.className=props[k]; else if(k.startsWith("on")) e.addEventListener(k.slice(2),props[k]); else e[k]=props[k]; } for(const k of kids) if(k!=null) e.append(k); return e; }
 let toastT;
 function toast(msg, err){ document.querySelector(".toast")?.remove(); const t=el("div",{class:"toast"+(err?" err":""),textContent:msg}); document.body.append(t); clearTimeout(toastT); toastT=setTimeout(()=>t.remove(), 3200); }
 function alertBox(txt, sub){ return new Promise(res=>{ $("cfTxt").textContent=txt; $("cfSub").textContent=sub||""; $("cfYes").textContent="OK"; $("cfNo").hidden=true; $("cfOv").hidden=false;
   $("cfYes").onclick=()=>{ $("cfOv").hidden=true; $("cfNo").hidden=false; $("cfYes").onclick=null; res(); }; $("cfYes").focus(); }); }
-function confirmBox(txt, sub, yes="Ya"){ return new Promise(res=>{ $("cfNo").hidden=false; $("cfTxt").textContent=txt; $("cfSub").textContent=sub||""; $("cfYes").textContent=yes; $("cfOv").hidden=false; const done=v=>{ $("cfOv").hidden=true; $("cfYes").onclick=$("cfNo").onclick=null; res(v); }; $("cfYes").onclick=()=>done(true); $("cfNo").onclick=()=>done(false); $("cfYes").focus(); }); }
+function confirmBox(txt, sub, yes="Yes"){ return new Promise(res=>{ $("cfNo").hidden=false; $("cfTxt").textContent=txt; $("cfSub").textContent=sub||""; $("cfYes").textContent=yes; $("cfOv").hidden=false; const done=v=>{ $("cfOv").hidden=true; $("cfYes").onclick=$("cfNo").onclick=null; res(v); }; $("cfYes").onclick=()=>done(true); $("cfNo").onclick=()=>done(false); $("cfYes").focus(); }); }
 function findStaff(q){ const n=norm(q); return S.map.get(n) || S.map.get(stripZ(n)) || null; }
 function used(){ const u=new Set(); S.state.winners.forEach(w=>u.add(w.no)); S.state.forfeited.forEach(w=>u.add(w.no)); return u; }
 function eligible(){ const u=used(); return [...S.hadir.keys()].filter(no=>!u.has(no)).sort(nsort); }
@@ -386,7 +386,7 @@ function makeDb(db){
   return { live:true,
     on(k,cb){
       subs[k]=cb;
-      const fail=e=>{ console.warn(e); if(e.code==="revoked") toast("Sambungan data ditamatkan. Muat semula halaman.", true); };
+      const fail=e=>{ console.warn(e); if(e.code==="revoked") toast("Data connection ended. Reload the page.", true); };
       if(k==="staff") db.collection("staff").onSnapshot(s=>{ const docs=[...s.docs].sort((a,b)=>nsort(a.id,b.id)); staffIds=docs.map(d=>d.id); cb(docs.flatMap(d=>d.data().items||[])); }, fail);
       if(k==="hadir") for(let i=0;i<SHARDS;i++) db.collection("hadir").where("s","==",i).limit(1000).onSnapshot(s=>{ const m=new Map(); s.docs.forEach(d=>{ const v=d.data(); m.set(v.no, v.at); }); shardMaps[i]=m; const all=new Map(); shardMaps.forEach(x=>x.forEach((v,kk)=>all.set(kk,v))); cb(all); }, fail);
       if(k==="state") db.doc("draw/state").onSnapshot(s=>cb(s.exists ? s.data() : {winners:[],forfeited:[]}), fail);
@@ -420,13 +420,13 @@ function makeSupa(sb){
     state: async()=>subs.state?.((await one("draw_state"))||{winners:[],forfeited:[],cur:null}),
     cfg:   async()=>subs.cfg?.((await one("config"))||DEFAULT_CFG),
   };
-  const reload=(k,ms=300)=>{ clearTimeout(timers[k]); timers[k]=setTimeout(()=>loaders[k]().catch(e=>{ console.warn(e); toast("Gagal memuat data. Semak sambungan internet.", true); }),ms); };
+  const reload=(k,ms=300)=>{ clearTimeout(timers[k]); timers[k]=setTimeout(()=>loaders[k]().catch(e=>{ console.warn(e); toast("Could not load data. Check the internet connection.", true); }),ms); };
   sb.channel("cabutan")
     .on("postgres_changes",{event:"*",schema:"public",table:"staff"},()=>reload("staff",600))
     .on("postgres_changes",{event:"*",schema:"public",table:"hadir"},p=>{ if(p.eventType==="DELETE") hadir.delete(p.old?.no); else hadir.set(p.new.no,recOf(p.new)); clearTimeout(timers.h); timers.h=setTimeout(pushHadir,80); })
     .on("postgres_changes",{event:"*",schema:"public",table:"draw_state"},p=>{ if(p.new?.data) subs.state?.(p.new.data); else reload("state"); })
     .on("postgres_changes",{event:"*",schema:"public",table:"config"},p=>{ if(p.new?.data) subs.cfg?.(p.new.data); else reload("cfg"); })
-    .subscribe(status=>{ const ok=status==="SUBSCRIBED"; setMode(ok, ok?"Data dikongsi secara langsung":"Menyambung semula…"); if(ok) Object.keys(subs).forEach(k=>reload(k,0)); });
+    .subscribe(status=>{ const ok=status==="SUBSCRIBED"; setMode(ok, ok?"Live data shared":"Reconnecting…"); if(ok) Object.keys(subs).forEach(k=>reload(k,0)); });
   const chk=({error})=>{ if(error) throw error; };
   return { live:true,
     on(k,cb){ subs[k]=cb; reload(k,0); },
@@ -438,20 +438,20 @@ function makeSupa(sb){
     },
     async checkin(no, pic){
       const {error}=await sb.from("hadir").insert({no, pic:pic||""});
-      if(error?.code==="23505"){ await loaders.hadir(); const e=new Error("sudah hadir"); e.code="dup"; throw e; } // kaunter lain daftar dahulu
+      if(error?.code==="23505"){ await loaders.hadir(); const e=new Error("already checked in"); e.code="dup"; throw e; } // kaunter lain daftar dahulu
       chk({error}); if(!hadir.has(no)){ hadir.set(no,{at:Date.now(),pic:pic||"",kaunter:S.me||""}); pushHadir(); } },
     async uncheck(no){ const {data,error}=await sb.from("hadir").delete().eq("no",no).select("no"); chk({error});
-      if(!data?.length){ const e=new Error("tiada kebenaran"); e.code="42501"; throw e; } hadir.delete(no); pushHadir(); },
+      if(!data?.length){ const e=new Error("not permitted"); e.code="42501"; throw e; } hadir.delete(no); pushHadir(); },
     async resetHadir(){ chk(await sb.from("hadir").delete().neq("no","")); hadir.clear(); pushHadir(); },
     async saveState(s){ chk(await sb.from("draw_state").upsert({id:1,data:s})); subs.state?.(s); },
     async saveCfg(c){ chk(await sb.from("config").upsert({id:1,data:c})); subs.cfg?.(c); } };
 }
-async function guarded(p, okMsg){ try{ await p; if(okMsg) toast(okMsg); return true; }catch(e){ console.warn(e); toast(e?.code==="quota_exceeded" ? "Ruang storan penuh. Kosongkan data lama dahulu." : (e?.code==="invalid_argument"||e?.code==="42501") ? "Anda tiada kebenaran untuk menyimpan data di sini." : "Gagal menyimpan. Cuba lagi.", true); return false; } }
+async function guarded(p, okMsg){ try{ await p; if(okMsg) toast(okMsg); return true; }catch(e){ console.warn(e); toast(e?.code==="quota_exceeded" ? "Storage is full. Clear old data first." : (e?.code==="invalid_argument"||e?.code==="42501") ? "You don't have permission to save this." : "Could not save. Try again.", true); return false; } }
 
 function setMode(live, txt){ const m=$("mode"); m.classList.toggle("live", live); m.lastElementChild.textContent=txt; }
 function wire(st){
   store=st;
-  setMode(st.live, st.live ? "Data dikongsi secara langsung" : "Mod peranti ini sahaja");
+  setMode(st.live, st.live ? "Live data shared" : "This device only");
   st.on("staff", list=>{ S.staff=list.map(r=>({no:norm(r[0]),name:String(r[1]||""),branch:String(r[2]||"")})); S.map=new Map(); S.staff.forEach(s=>{ S.map.set(s.no,s); const z=stripZ(s.no); if(!S.map.has(z)) S.map.set(z,s); }); renderAll(); });
   st.on("hadir", m2=>{ S.hadir=m2; renderAll(); });
   st.on("state", s=>{ S.state={winners:s.winners||[],forfeited:s.forfeited||[],cur:s.cur||null}; renderAll(); syncCur(); });
@@ -471,7 +471,7 @@ const toEmail=id=>{ id=id.trim().toLowerCase(); return id.includes("@") ? id : i
 async function startSupa(sb, session){
   let {data,error}=await sb.from("app_roles").select("role,pics").maybeSingle();
   if(error && /pics/.test(error.message||"")) ({data,error}=await sb.from("app_roles").select("role").maybeSingle()); // supabase-pic.sql belum dijalankan
-  if(error || !data){ await sb.auth.signOut(); return showLogin(sb, error ? "Tidak dapat menyemak peranan. Cuba lagi." : "ID ini tiada akses ke sistem cabutan."); }
+  if(error || !data){ await sb.auth.signOut(); return showLogin(sb, error ? "Could not check your role. Try again." : "This ID has no access to the lucky draw."); }
   SB=sb; S.me=(session?.user?.email||"").toLowerCase(); S.pics=data.pics||[];
   $("loginOv").hidden=true;
   applyRole(data.role, data.role==="hr" ? idOf(S.me) : "MASTER");
@@ -479,47 +479,48 @@ async function startSupa(sb, session){
   if(data.role==="master") initHrAdmin(sb);
 }
 /* MASTER: urus ID HR cawangan + nama PIC setiap ID (fungsi SQL hr_* dan pic_set) */
+const EN_ERR={"ID hanya boleh guna huruf, nombor, titik, sengkang (maks 40 aksara)":"IDs may only use letters, numbers, dots and dashes (max 40 characters)","Hanya MASTER boleh mengurus ID HR":"Only MASTER can manage HR IDs","Kata laluan minimum 6 aksara":"Password must be at least 6 characters","ID ini sudah wujud":"This ID already exists","ID HR ini tidak wujud":"This HR ID doesn't exist","ID ini tidak wujud":"This ID doesn't exist","Maksimum 10 PIC setiap ID":"Maximum 10 PICs per ID"};
 const splitPics=v=>String(v||"").split(/[,;\n]/).map(x=>x.trim()).filter(Boolean);
 function initHrAdmin(sb){
   $("hrBox").hidden=false;
-  const fmtD=t=>t ? new Date(t).toLocaleString("ms-MY",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}) : "Belum pernah";
-  const errMsg=e=>{ const m=e?.message||""; return /pic_set|pics/i.test(m) ? "Fungsi PIC belum dipasang. Jalankan supabase-pic.sql di Supabase." : /hr_list|hr_create|schema cache/i.test(m) ? "Fungsi ID HR belum dipasang. Jalankan supabase-hr-ids.sql di Supabase." : (m||"Gagal. Cuba lagi."); };
+  const fmtD=t=>t ? new Date(t).toLocaleString("en-MY",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}) : "Never";
+  const errMsg=e=>{ const m=e?.message||""; return /pic_set|pics/i.test(m) ? "PIC functions are not installed. Run supabase-pic.sql in Supabase." : /hr_list|hr_create|schema cache/i.test(m) ? "HR ID functions are not installed. Run supabase-hr-ids.sql in Supabase." : (EN_ERR[m]||m||"Failed. Try again."); };
   const rpc=async(fn,args)=>{ const {data,error}=await sb.rpc(fn,args); if(error) throw new Error(errMsg(error)); return data; };
-  const savePics=async(email, input)=>{ try{ const p=await rpc("pic_set",{p_id:email,p_pics:splitPics(input.value)}); input.value=(p||[]).join(", "); if(email===S.me) S.pics=p||[]; toast(`PIC ${idOf(email)} disimpan (${(p||[]).length} nama)`); }catch(e){ toast(e.message,true); } };
-  const picCell=(email, pics)=>{ const inp=el("input",{value:(pics||[]).join(", "),placeholder:"Ali, Siti, Kumar",style:"min-width:220px;background:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 8px"}); inp.setAttribute("aria-label","Nama PIC "+idOf(email));
+  const savePics=async(email, input)=>{ try{ const p=await rpc("pic_set",{p_id:email,p_pics:splitPics(input.value)}); input.value=(p||[]).join(", "); if(email===S.me) S.pics=p||[]; toast(`PICs for ${idOf(email)} saved (${(p||[]).length} names)`); }catch(e){ toast(e.message,true); } };
+  const picCell=(email, pics)=>{ const inp=el("input",{value:(pics||[]).join(", "),placeholder:"Ali, Siti, Kumar",style:"min-width:220px;background:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 8px"}); inp.setAttribute("aria-label","PIC names for "+idOf(email));
     inp.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); savePics(email,inp); } });
     return [el("td",null,inp), inp]; };
   async function load(){
     const body=$("hrBody"); body.textContent="";
     let rows; try{ rows=await rpc("hr_list"); }catch(e){ body.append(el("tr",null, el("td",{colSpan:4,textContent:e.message,style:"white-space:normal"}))); return; }
     const [mTd,mInp]=picCell(S.me, S.pics);
-    body.append(el("tr",null, el("td",{class:"num",textContent:idOf(S.me)+" (anda)"}), mTd, el("td",{textContent:"—"}),
-      el("td",null, el("button",{class:"btn small",textContent:"Simpan PIC",onclick:()=>savePics(S.me,mInp)}))));
+    body.append(el("tr",null, el("td",{class:"num",textContent:idOf(S.me)+" (you)"}), mTd, el("td",{textContent:"—"}),
+      el("td",null, el("button",{class:"btn small",textContent:"Save PICs",onclick:()=>savePics(S.me,mInp)}))));
     rows.forEach(r=>{ const [td,inp]=picCell(r.email, r.pics);
-      body.append(el("tr",null, el("td",{class:"num",textContent:idOf(r.email)}), td, el("td",{textContent:r.created_at?fmtD(r.last_sign_in_at):"Akaun tiada"}),
-        el("td",null, el("button",{class:"btn small lamp",textContent:"Simpan PIC",onclick:()=>savePics(r.email,inp)}), " ",
-          el("button",{class:"btn small",textContent:"Padam",onclick:async()=>{
-            if(!await confirmBox(`Padam ID ${idOf(r.email)}?`,"ID ini tidak lagi boleh log masuk.","Padam")) return;
-            try{ await rpc("hr_delete",{p_id:r.email}); toast(`ID ${idOf(r.email)} dipadam`); load(); }catch(e){ toast(e.message,true); } }})))); });
-    if(!rows.length) body.append(el("tr",null, el("td",{colSpan:4,textContent:"Belum ada ID HR. Cipta di atas."})));
+      body.append(el("tr",null, el("td",{class:"num",textContent:idOf(r.email)}), td, el("td",{textContent:r.created_at?fmtD(r.last_sign_in_at):"No account"}),
+        el("td",null, el("button",{class:"btn small lamp",textContent:"Save PICs",onclick:()=>savePics(r.email,inp)}), " ",
+          el("button",{class:"btn small",textContent:"Delete",onclick:async()=>{
+            if(!await confirmBox(`Delete ID ${idOf(r.email)}?`,"This ID will no longer be able to log in.","Delete")) return;
+            try{ await rpc("hr_delete",{p_id:r.email}); toast(`ID ${idOf(r.email)} deleted`); load(); }catch(e){ toast(e.message,true); } }})))); });
+    if(!rows.length) body.append(el("tr",null, el("td",{colSpan:4,textContent:"No HR IDs yet. Create one above."})));
   }
-  const take=()=>{ const id=$("hrId").value.trim(), pw=$("hrPw").value; if(!id||pw.length<6){ toast("Isi ID dan kata laluan (min. 6 aksara).",true); return null; } return {id,pw}; };
+  const take=()=>{ const id=$("hrId").value.trim(), pw=$("hrPw").value; if(!id||pw.length<6){ toast("Enter an ID and a password (min. 6 characters).",true); return null; } return {id,pw}; };
   const done=msg=>{ toast(msg); $("hrPw").value=""; $("hrId").value=""; $("hrPics").value=""; load(); };
   $("hrForm").onsubmit=async e=>{ e.preventDefault(); const v=take(); if(!v) return; const pics=splitPics($("hrPics").value);
-    if(!pics.length) return toast("Isi sekurang-kurangnya satu nama PIC untuk ID ini.",true);
+    if(!pics.length) return toast("Enter at least one PIC name for this ID.",true);
     try{ const email=await rpc("hr_create",{p_id:v.id,p_password:v.pw}); await rpc("pic_set",{p_id:email,p_pics:pics});
-      done(`ID ${v.id.toUpperCase()} dicipta dengan ${pics.length} PIC.`); }catch(err){ toast(err.message,true); load(); } };
+      done(`ID ${v.id.toUpperCase()} created with ${pics.length} PICs.`); }catch(err){ toast(err.message,true); load(); } };
   $("hrPass").onclick=async()=>{ const v=take(); if(!v) return;
-    try{ await rpc("hr_set_password",{p_id:v.id,p_password:v.pw}); done(`Kata laluan ID ${v.id.toUpperCase()} ditukar.`); }catch(err){ toast(err.message,true); } };
+    try{ await rpc("hr_set_password",{p_id:v.id,p_password:v.pw}); done(`Password for ${v.id.toUpperCase()} changed.`); }catch(err){ toast(err.message,true); } };
   load();
 }
 function showLogin(sb, msg){
-  setMode(false,"Belum log masuk"); $("loginOv").hidden=false; $("lErr").textContent=msg||""; $("lPw").value=""; setTimeout(()=>$("lId").focus(),50);
+  setMode(false,"Not logged in"); $("loginOv").hidden=false; $("lErr").textContent=msg||""; $("lPw").value=""; setTimeout(()=>$("lId").focus(),50);
   $("loginForm").onsubmit=async e=>{
     e.preventDefault(); $("lBtn").disabled=true; $("lErr").textContent="";
     const {data,error}=await sb.auth.signInWithPassword({email:toEmail($("lId").value), password:$("lPw").value});
     $("lBtn").disabled=false;
-    if(error) return void($("lErr").textContent = /invalid/i.test(error.message) ? "ID atau kata laluan salah." : "Gagal log masuk: "+error.message);
+    if(error) return void($("lErr").textContent = /invalid/i.test(error.message) ? "Wrong ID or password." : "Login failed: "+error.message);
     startSupa(sb, data.session);
   };
 }
@@ -538,7 +539,8 @@ function showLogin(sb, msg){
 
 /* ---------- routing ---------- */
 function route(){
-  const v=(location.hash||(S.role==="hr"?"#daftar":"#cabutan")).slice(1); let view=["cabutan","daftar","tetapan"].includes(v)?v:"cabutan";
+  const ALIAS={draw:"cabutan",checkin:"daftar",settings:"tetapan"}; // English URLs; old Malay hashes still work
+  const h=(location.hash||(S.role==="hr"?"#checkin":"#draw")).slice(1), v=ALIAS[h]||h; let view=["cabutan","daftar","tetapan"].includes(v)?v:"cabutan";
   if(S.role==="hr" && view==="tetapan") view="daftar";
   ["cabutan","daftar","tetapan"].forEach(x=>$("v-"+x).hidden = x!==view);
   document.querySelectorAll(".nav a").forEach(a=>a.setAttribute("aria-current", a.dataset.v===view?"page":"false"));
@@ -562,21 +564,21 @@ function renderDraw(){
   pool.forEach(no=>{ const t=el("div",{class:"tile",textContent:no}); tileEls.set(no,t); tiles.append(t); });
   if(cand && phase==="announce" && tileEls.has(cand.no)) tileEls.get(cand.no).classList.add("win");
   $("boardEmpty").hidden = pool.length>0;
-  if(!pool.length && S.hadir.size){ $("boardEmpty").querySelector("strong").textContent="Tiada lagi nombor layak"; $("boardEmpty").querySelector("span").textContent="Semua peserta hadir telah dicabut atau dikeluarkan."; }
-  else { $("boardEmpty").querySelector("strong").textContent="Belum ada kehadiran"; $("boardEmpty").querySelector("span").textContent="Nombor staf akan muncul di sini sebaik sahaja pekerja mendaftar di kaunter."; }
+  if(!pool.length && S.hadir.size){ $("boardEmpty").querySelector("strong").textContent="No eligible numbers left"; $("boardEmpty").querySelector("span").textContent="Every attendee has been drawn or removed."; }
+  else { $("boardEmpty").querySelector("strong").textContent="No attendees yet"; $("boardEmpty").querySelector("span").textContent="Staff numbers appear here as soon as employees check in at a counter."; }
   layoutTiles();
   // prizes
   const pl=$("prizeList"); pl.textContent=""; const np=nextPrize();
   S.cfg.prizes.forEach((p,i)=>{
     const w=S.state.winners[i];
     pl.append(el("div",{class:"prize"+(w?" done":"")+(i===np?" next":"")}, el("i",{class:"dot"}), el("div",{class:"pn",textContent:p}),
-      el("div",{class:"pw"}, w ? el("span",{textContent:w.no}) : null, w ? (w.name||"") : (i===np?"Seterusnya":"—"))));
+      el("div",{class:"pw"}, w ? el("span",{textContent:w.no}) : null, w ? (w.name||"") : (i===np?"Up next":"—"))));
   });
   const go=$("goBtn");
   go.disabled = np<0 || !pool.length || phase!=="idle" || !!S.state.cur;
-  go.firstChild.textContent = np<0 ? "Tamat" : "Mula";
-  $("goSub").textContent = np<0 ? "Semua hadiah telah dimenangi" : S.cfg.prizes[np];
-  $("stageTitle").textContent = np<0 ? "Cabutan selesai" : "Cabutan: " + S.cfg.prizes[np];
+  go.firstChild.textContent = np<0 ? "Done" : "Start";
+  $("goSub").textContent = np<0 ? "All prizes have been won" : S.cfg.prizes[np];
+  $("stageTitle").textContent = np<0 ? "Draw complete" : "Drawing: " + S.cfg.prizes[np];
 }
 function layoutTiles(){
   const box=$("tiles"); const n=tileEls.size; if(!n || $("v-cabutan").hidden) return;
@@ -597,8 +599,8 @@ function rnd(n){ const a=new Uint32Array(1); crypto.getRandomValues(a); return a
 
 function startDraw(){
   if(phase!=="idle" || S.state.cur || S.role==="hr") return; const pi=nextPrize(); const pool=eligible();
-  if(pi<0) return toast("Semua hadiah telah dimenangi.");
-  if(!pool.length) return toast("Tiada peserta layak.", true);
+  if(pi<0) return toast("All prizes have been won.");
+  if(!pool.length) return toast("No eligible attendees.", true);
   const winNo=pool[rnd(pool.length)];
   const s=findStaff(winNo)||{no:winNo,name:"",branch:""};
   cand={no:winNo,name:s.name,branch:s.branch,prize:S.cfg.prizes[pi]}; calls=0;
@@ -631,14 +633,14 @@ function landed(){
   setTimeout(showWinner, 1100);
 }
 function showWinner(){
-  $("wPrize").textContent=cand.prize; $("wNo").textContent=cand.no; $("wName").textContent=cand.name||"(nama tiada dalam senarai)"; $("wBranch").textContent=cand.branch||"";
+  $("wPrize").textContent=cand.prize; $("wNo").textContent=cand.no; $("wName").textContent=cand.name||"(name not in list)"; $("wBranch").textContent=cand.branch||"";
   updCalls(); $("winOv").hidden=false; $("wCall").focus();
 }
 function updCalls(){
   document.querySelectorAll(".calls i").forEach((x,k)=>x.classList.toggle("on",k<calls));
-  $("wCall").textContent = calls>=3 ? "3 panggilan dibuat" : "Panggilan "+(calls+1);
+  $("wCall").textContent = calls>=3 ? "3 calls made" : "Call "+(calls+1);
   $("wCall").disabled = calls>=3; $("wNo3").disabled = calls<3;
-  $("wCallTxt").textContent = calls===0 ? "Panggil nama pemenang. Selepas 3 panggilan tanpa sahutan, cabut semula." : calls<3 ? `Panggilan ke-${calls} dibuat. Tunggu sahutan…` : "Tiada sahutan selepas 3 panggilan. Nombor ini akan dikeluarkan.";
+  $("wCallTxt").textContent = calls===0 ? "Call the winner's name. After 3 calls with no response, draw again." : calls<3 ? `Call ${calls} made. Waiting for a response…` : "No response after 3 calls. This number will be removed.";
 }
 /* The candidate being announced lives in draw/state.cur ({no,name,branch,prize,calls,started}), so a refresh
    (or a second screen on #cabutan) brings the overlay back once the 10 s spin would have ended. */
@@ -665,17 +667,17 @@ $("wCall").onclick=()=>{ if(calls<3){ calls++; beep(660,.25,"sine",.12); setTime
   if(S.state.cur?.no===cand.no) guarded(store.saveState({winners:S.state.winners, forfeited:S.state.forfeited, cur:{...S.state.cur, calls}})); } };
 $("wOk").onclick=async()=>{
   const w={no:cand.no,name:cand.name,branch:cand.branch,prize:cand.prize, at:Date.now()}; $("winOv").hidden=true; phase="idle"; cand=null;
-  await guarded(store.saveState({winners:[...S.state.winners,w], forfeited:S.state.forfeited, cur:null}), `Tahniah ${w.name||w.no}!`); renderDraw();
+  await guarded(store.saveState({winners:[...S.state.winners,w], forfeited:S.state.forfeited, cur:null}), `Congratulations ${w.name||w.no}!`); renderDraw();
 };
 $("wNo3").onclick=async()=>{
   const f={no:cand.no,name:cand.name,branch:cand.branch,prize:cand.prize, at:Date.now(), calls:3}; $("winOv").hidden=true; phase="idle"; cand=null;
-  const ok=await guarded(store.saveState({winners:S.state.winners, forfeited:[...S.state.forfeited,f], cur:null}), `No. ${f.no} dikeluarkan. Mencabut semula…`);
+  const ok=await guarded(store.saveState({winners:S.state.winners, forfeited:[...S.state.forfeited,f], cur:null}), `No. ${f.no} removed. Drawing again…`);
   renderDraw(); if(ok) setTimeout(startDraw, 1200);
 };
 $("goBtn").onclick=startDraw;
 document.addEventListener("keydown",e=>{ if(e.code==="Space" && !$("v-cabutan").hidden && $("winOv").hidden && $("cfOv").hidden && document.activeElement?.tagName!=="INPUT"){ e.preventDefault(); startDraw(); } });
-$("soundBtn").onclick=e=>{ sound=!sound; e.target.textContent="Bunyi: "+(sound?"Hidup":"Tutup"); e.target.setAttribute("aria-pressed",sound); };
-$("fsBtn").onclick=()=>{ const d=document.documentElement; (document.fullscreenElement ? document.exitFullscreen() : d.requestFullscreen?.())?.catch?.(()=>toast("Skrin penuh tidak disokong di sini.",true)); };
+$("soundBtn").onclick=e=>{ sound=!sound; e.target.textContent="Sound: "+(sound?"On":"Off"); e.target.setAttribute("aria-pressed",sound); };
+$("fsBtn").onclick=()=>{ const d=document.documentElement; (document.fullscreenElement ? document.exitFullscreen() : d.requestFullscreen?.())?.catch?.(()=>toast("Full screen isn't supported here.",true)); };
 
 /* ---------- KIOSK ---------- */
 let kHits=[], kFlash=null;
@@ -683,33 +685,33 @@ function renderKiosk(){
   $("kCount").textContent=S.hadir.size; $("kTotal").textContent=S.staff.length;
   const ol=$("kRecent"); ol.textContent="";
   const mine=S.role==="hr" && S.me;  // HR nampak pendaftaran kaunter sendiri; MASTER nampak semua
-  $("kRecentLbl").textContent = mine ? "Didaftar di kaunter "+idOf(S.me) : "Terkini didaftar";
+  $("kRecentLbl").textContent = mine ? "Checked in at counter "+idOf(S.me) : "Recently checked in";
   const rec=[...S.hadir.entries()].filter(([no])=>!mine || S.hInfo.get(no)?.kaunter===S.me).sort((a,b)=>b[1]-a[1]).slice(0,50);
   rec.forEach(([no,at])=>{ const s=findStaff(no)||{}, h=S.hInfo.get(no)||{};
-    const sub=[s.branch, h.pic&&("Disahkan: "+h.pic), !mine&&h.kaunter&&("Kaunter "+idOf(h.kaunter))].filter(Boolean).join(" · ");
+    const sub=[s.branch, h.pic&&("Verified by "+h.pic), !mine&&h.kaunter&&("Counter "+idOf(h.kaunter))].filter(Boolean).join(" · ");
     ol.append(el("li",null, el("b",{textContent:no}), el("span",null, s.name||"—", sub?el("small",{textContent:sub}):null), el("time",{textContent:fmtT(at)}))); });
-  if(!rec.length) ol.append(el("li",null, el("span",{textContent:"Belum ada yang hadir. Nama yang ditanda hadir akan muncul di sini.",style:"grid-column:1/-1;white-space:normal;color:var(--muted)"})));
+  if(!rec.length) ol.append(el("li",null, el("span",{textContent:"No one has checked in yet. Checked-in names appear here.",style:"grid-column:1/-1;white-space:normal;color:var(--muted)"})));
   kSearch();
 }
 function kSearch(){
   const q=$("kInput").value.trim(); const box=$("kResults"); box.textContent=""; kHits=[];
-  if(!S.staff.length){ box.append(el("div",{class:"note",textContent:"Senarai pekerja belum diimport. Pergi ke Tetapan dan import fail Excel/CSV dahulu."})); return; }
-  if(!q){ box.append(el("div",{class:"note",textContent:`Taip nama atau no. staf untuk mencari daripada ${S.staff.length} pekerja.`})); return; }
+  if(!S.staff.length){ box.append(el("div",{class:"note",textContent:"The staff list hasn't been imported. Go to Settings and import an Excel/CSV file first."})); return; }
+  if(!q){ box.append(el("div",{class:"note",textContent:`Type a name or staff no. to search ${S.staff.length} staff.`})); return; }
   const nq=norm(q), lq=q.toLowerCase();
   const words=lq.split(/\s+/).filter(Boolean);
   const hits=S.staff.filter(s=>{ const n=s.name.toLowerCase(); return s.no.startsWith(nq) || stripZ(s.no).startsWith(stripZ(nq)) || words.every(w=>n.includes(w)); });
   hits.sort((a,b)=>(a.no===nq?-1:0)-(b.no===nq?-1:0));
   kHits=hits.slice(0,20);
-  if(!kHits.length){ box.append(el("div",{class:"note",textContent:"Tiada padanan. Semak ejaan, atau tambah staf ini di Tetapan."})); return; }
+  if(!kHits.length){ box.append(el("div",{class:"note",textContent:"No match. Check the spelling, or add this staff member in Settings."})); return; }
   kHits.forEach(s=>{
     const at=S.hadir.get(s.no);
     box.append(el("div",{class:"res"+(at?" in":"")+(kFlash===s.no?" flash":"")},
       el("span",{class:"rn",textContent:s.no}),
       el("span",{class:"rt"}, el("b",{textContent:s.name}), el("span",{textContent:s.branch})),
-      at ? el("span",{class:"tag dup"}, "SUDAH HADIR", el("small",{textContent:dupNote(s.no)})) : null,
-      at ? (canUndo(s.no) ? el("button",{class:"undo",textContent:"Batal",onclick:()=>kUndo(s)}) : null) : el("button",{class:"btn ok",textContent:"Hadir",onclick:()=>kDo(s)})));
+      at ? el("span",{class:"tag dup"}, "ALREADY CHECKED IN", el("small",{textContent:dupNote(s.no)})) : null,
+      at ? (canUndo(s.no) ? el("button",{class:"undo",textContent:"Undo",onclick:()=>kUndo(s)}) : null) : el("button",{class:"btn ok",textContent:"Check in",onclick:()=>kDo(s)})));
   });
-  if(hits.length>kHits.length) box.append(el("div",{class:"note",textContent:`${hits.length-kHits.length} lagi padanan. Taip lebih spesifik.`}));
+  if(hits.length>kHits.length) box.append(el("div",{class:"note",textContent:`${hits.length-kHits.length} more matches. Type something more specific.`}));
 }
 /* Setiap kehadiran disahkan oleh PIC kaunter: pilih nama (atau tekan 1–9) */
 async function myPics(){
@@ -730,11 +732,11 @@ function choosePic(s, pics){
 }
 /* Elak pendaftaran berganda: tunjuk siapa yang sudah daftarkan pekerja ini */
 function dupNote(no){ const at=S.hadir.get(no), h=S.hInfo.get(no)||{};
-  return ["Didaftar "+fmtT(at), h.kaunter&&("kaunter "+idOf(h.kaunter)), h.pic&&("disahkan "+h.pic)].filter(Boolean).join(" · "); }
+  return ["Checked in "+fmtT(at), h.kaunter&&("counter "+idOf(h.kaunter)), h.pic&&("verified by "+h.pic)].filter(Boolean).join(" · "); }
 const canUndo=no=>S.role!=="hr" || !SB || S.hInfo.get(no)?.kaunter===S.me;
 async function showDup(s){
   beep(220,.35,"square",.07);
-  await alertBox(`${s.name} (${s.no}) sudah hadir`, dupNote(s.no)+". Tidak perlu daftar semula.");
+  await alertBox(`${s.name} (${s.no}) is already checked in`, dupNote(s.no)+". No need to check in again.");
   $("kInput").value=""; $("kInput").focus(); kSearch();
 }
 async function kDo(s){
@@ -742,19 +744,19 @@ async function kDo(s){
   let pic="";
   if(SB){
     const pics=await myPics();
-    if(!pics.length){ if(S.role==="hr") return toast("Tiada nama PIC untuk kaunter ini. Minta MASTER tambah nama PIC di Tetapan.", true); pic="MASTER"; }
+    if(!pics.length){ if(S.role==="hr") return toast("This counter has no PIC names. Ask MASTER to add PIC names in Settings.", true); pic="MASTER"; }
     else { pic=await choosePic(s, pics); if(!pic) return; }
     if(S.hadir.has(s.no)) return showDup(s); // didaftar oleh kaunter lain semasa PIC dipilih
   }
   let dup=false;
   const ok=await guarded(store.checkin(s.no, pic).catch(e=>{ if(e.code!=="dup") throw e; dup=true; }), "");
   if(dup) return showDup(s);
-  if(ok){ toast(`${s.name} (${s.no}) hadir${pic?" · disahkan "+pic:""}`);
+  if(ok){ toast(`${s.name} (${s.no}) checked in${pic?" · verified by "+pic:""}`);
     beep(988,.12,"sine",.08); kFlash=s.no; setTimeout(()=>{ kFlash=null; },1500);
     $("kInput").value=""; $("kInput").focus(); kSearch();
   }
 }
-async function kUndo(s){ if(!canUndo(s.no)) return toast("Hanya kaunter yang mendaftar boleh membatalkan.", true); if(await confirmBox(`Batalkan kehadiran ${s.no}?`, s.name+" · "+dupNote(s.no), "Batalkan")) guarded(store.uncheck(s.no), "Kehadiran dibatalkan"); }
+async function kUndo(s){ if(!canUndo(s.no)) return toast("Only the counter that checked this person in can undo it.", true); if(await confirmBox(`Undo check-in for ${s.no}?`, s.name+" · "+dupNote(s.no), "Undo")) guarded(store.uncheck(s.no), "Check-in undone"); }
 $("kInput").addEventListener("input", kSearch);
 $("kInput").addEventListener("keydown", e=>{
   if(e.key==="Escape"){ $("kInput").value=""; kSearch(); return; }
@@ -763,7 +765,7 @@ $("kInput").addEventListener("keydown", e=>{
   const pending=kHits.filter(s=>!S.hadir.has(s.no));
   if(exact && !S.hadir.has(exact.no)) kDo(exact);
   else if(pending.length===1 && kHits.length===1) kDo(pending[0]);
-  else if(kHits.length>1) toast("Lebih daripada satu nama. Tekan butang Hadir pada nama yang betul.");
+  else if(kHits.length>1) toast("More than one name matches. Press Check in on the right name.");
   else if(exact) showDup(exact);
   else if(kHits.length===1) showDup(kHits[0]);
 });
@@ -775,13 +777,13 @@ function renderSettings(){
   const q=$("hFind").value.trim().toLowerCase(); const body=$("hBody"); body.textContent="";
   const rows=[...S.hadir.entries()].sort((a,b)=>b[1]-a[1]).map(([no,at])=>({no,at,s:findStaff(no)||{}})).filter(r=>!q || r.no.toLowerCase().includes(q) || (r.s.name||"").toLowerCase().includes(q));
   rows.slice(0,300).forEach(r=>body.append(el("tr",null, el("td",{class:"num",textContent:r.no}), el("td",{textContent:r.s.name||"—"}), el("td",{textContent:r.s.branch||""}), el("td",{textContent:fmtT(r.at)}), el("td",{textContent:S.hInfo.get(r.no)?.pic||"—"}), el("td",{textContent:idOf(S.hInfo.get(r.no)?.kaunter)||"—"}),
-    el("td",null, el("button",{class:"btn small",textContent:"Buang",onclick:async()=>{ if(await confirmBox(`Buang ${r.no} dari senarai hadir?`, r.s.name||"", "Buang")) guarded(store.uncheck(r.no), "Dibuang"); }})))));
-  if(!rows.length) body.append(el("tr",null, el("td",{colSpan:7,textContent: S.hadir.size?"Tiada padanan.":"Belum ada sesiapa mendaftar. Kehadiran akan muncul di sini."})));
+    el("td",null, el("button",{class:"btn small",textContent:"Remove",onclick:async()=>{ if(await confirmBox(`Remove ${r.no} from attendance?`, r.s.name||"", "Remove")) guarded(store.uncheck(r.no), "Removed"); }})))));
+  if(!rows.length) body.append(el("tr",null, el("td",{colSpan:7,textContent: S.hadir.size?"No match.":"No one has checked in yet. Attendance appears here."})));
   // results
   const rb=$("rBody"); rb.textContent="";
-  const res=[...S.state.winners.map(w=>({...w,st:"Menang"})), ...S.state.forfeited.map(w=>({...w,st:"Tiada sahutan"}))].sort((a,b)=>a.at-b.at);
+  const res=[...S.state.winners.map(w=>({...w,st:"Won"})), ...S.state.forfeited.map(w=>({...w,st:"No response"}))].sort((a,b)=>a.at-b.at);
   res.forEach(w=>rb.append(el("tr",null, el("td",{textContent:w.prize}), el("td",{class:"num",textContent:w.no}), el("td",{textContent:w.name||"—"}), el("td",{textContent:w.branch||""}), el("td",{textContent:w.st}))));
-  if(!res.length) rb.append(el("tr",null, el("td",{colSpan:5,textContent:"Belum ada cabutan. Pemenang akan disenaraikan di sini."})));
+  if(!res.length) rb.append(el("tr",null, el("td",{colSpan:5,textContent:"No draws yet. Winners will be listed here."})));
 }
 $("hFind").addEventListener("input", renderSettings);
 
@@ -792,12 +794,12 @@ function renderCfgEdit(){
 }
 function drawCfg(){
   $("cTitle").value=cfgDraft.title; const pe=$("pEdit"); pe.textContent="";
-  cfgDraft.prizes.forEach((p,i)=>{ const inp=el("input",{value:p,id:"prz"+i,oninput:e=>cfgDraft.prizes[i]=e.target.value}); inp.setAttribute("aria-label","Hadiah "+(i+1)); pe.append(el("div",{class:"prow"}, el("b",{textContent:i+1}), inp)); });
+  cfgDraft.prizes.forEach((p,i)=>{ const inp=el("input",{value:p,id:"prz"+i,oninput:e=>cfgDraft.prizes[i]=e.target.value}); inp.setAttribute("aria-label","Prize "+(i+1)); pe.append(el("div",{class:"prow"}, el("b",{textContent:i+1}), inp)); });
 }
 $("cTitle").addEventListener("input",e=>cfgDraft.title=e.target.value);
-$("pAdd").onclick=()=>{ cfgDraft.prizes.push("Hadiah Ke-"+(cfgDraft.prizes.length+1)); drawCfg(); };
+$("pAdd").onclick=()=>{ cfgDraft.prizes.push("Prize "+(cfgDraft.prizes.length+1)); drawCfg(); };
 $("pDel").onclick=()=>{ if(cfgDraft.prizes.length>1){ cfgDraft.prizes.pop(); drawCfg(); } };
-$("cSave").onclick=()=>{ const c={title:cfgDraft.title.trim()||DEFAULT_CFG.title, prizes:cfgDraft.prizes.map((p,i)=>p.trim()||("Hadiah "+(i+1)))}; guarded(store.saveCfg(c),"Tetapan disimpan"); $("cSave").blur(); };
+$("cSave").onclick=()=>{ const c={title:cfgDraft.title.trim()||DEFAULT_CFG.title, prizes:cfgDraft.prizes.map((p,i)=>p.trim()||("Prize "+(i+1)))}; guarded(store.saveCfg(c),"Settings saved"); $("cSave").blur(); };
 
 function loadXLSX(){ return window.XLSX ? Promise.resolve() : new Promise((ok,no)=>{ const s=document.createElement("script"); s.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"; s.onload=ok; s.onerror=no; document.head.append(s); }); }
 function parseRows(rows){
@@ -814,38 +816,38 @@ function parseRows(rows){
   return out;
 }
 $("fileIn").onchange=async e=>{
-  const f=e.target.files[0]; if(!f) return; const pv=$("importPrev"); pv.textContent="Membaca fail…";
+  const f=e.target.files[0]; if(!f) return; const pv=$("importPrev"); pv.textContent="Reading file…";
   try{
     await loadXLSX(); const wb=XLSX.read(await f.arrayBuffer(),{type:"array"}); const ws=wb.Sheets[wb.SheetNames[0]];
     const list=parseRows(XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:""}));
     pv.textContent="";
-    if(!list.length){ pv.append(el("div",{class:"note",textContent:"Tiada data dijumpai. Pastikan lajur No Staf dan Nama ada dalam helaian pertama."})); return; }
+    if(!list.length){ pv.append(el("div",{class:"note",textContent:"No data found. Make sure the first sheet has Staff No and Name columns."})); return; }
     const tb=el("tbody"); list.slice(0,5).forEach(r=>tb.append(el("tr",null, el("td",{class:"num",textContent:r[0]}), el("td",{textContent:r[1]}), el("td",{textContent:r[2]}))));
-    pv.append(el("div",{class:"label",textContent:`${list.length} staf dijumpai · 5 pertama:`}),
-      el("div",{class:"tbl-wrap"}, el("table",null, el("thead",null, el("tr",null, el("th",{textContent:"No"}), el("th",{textContent:"Nama"}), el("th",{textContent:"Cawangan"}))), tb)),
-      el("div",{class:"row"}, el("button",{class:"btn lamp small",textContent:`Simpan ${list.length} staf`,onclick:async()=>{ pv.textContent="Menyimpan…"; if(await guarded(store.saveStaff(list),"Senarai staf disimpan")) pv.textContent=""; e.target.value=""; }}),
-        el("button",{class:"btn small",textContent:"Batal",onclick:()=>{ pv.textContent=""; e.target.value=""; }})));
-  }catch(err){ console.warn(err); pv.textContent=""; toast("Fail tidak dapat dibaca. Gunakan .xlsx atau .csv.", true); }
+    pv.append(el("div",{class:"label",textContent:`${list.length} staff found · first 5:`}),
+      el("div",{class:"tbl-wrap"}, el("table",null, el("thead",null, el("tr",null, el("th",{textContent:"No"}), el("th",{textContent:"Name"}), el("th",{textContent:"Branch"}))), tb)),
+      el("div",{class:"row"}, el("button",{class:"btn lamp small",textContent:`Save ${list.length} staff`,onclick:async()=>{ pv.textContent="Saving…"; if(await guarded(store.saveStaff(list),"Staff list saved")) pv.textContent=""; e.target.value=""; }}),
+        el("button",{class:"btn small",textContent:"Cancel",onclick:()=>{ pv.textContent=""; e.target.value=""; }})));
+  }catch(err){ console.warn(err); pv.textContent=""; toast("Couldn't read the file. Use .xlsx or .csv.", true); }
 };
 $("aSave").onclick=()=>{
   const no=norm($("aNo").value), name=$("aName").value.trim(), br=$("aBranch").value.trim();
-  if(!no||!name) return toast("Isi No staf dan Nama.", true);
-  if(S.map.has(no)) return toast("No staf ini sudah ada dalam senarai.", true);
+  if(!no||!name) return toast("Enter a staff no. and name.", true);
+  if(S.map.has(no)) return toast("This staff no. is already in the list.", true);
   const list=S.staff.map(s=>[s.no,s.name,s.branch]); list.push([no,name,br]);
-  guarded(store.saveStaff(list), name+" ditambah").then(ok=>{ if(ok){ $("aNo").value=$("aName").value=$("aBranch").value=""; } });
+  guarded(store.saveStaff(list), name+" added").then(ok=>{ if(ok){ $("aNo").value=$("aName").value=$("aBranch").value=""; } });
 };
-$("resetDraw").onclick=async()=>{ if(await confirmBox("Set semula semua keputusan cabutan?","Senarai pemenang dan nombor yang dikeluarkan akan dipadam. Kehadiran kekal.","Set semula")) guarded(store.saveState({winners:[],forfeited:[],cur:null}),"Cabutan diset semula"); };
-$("resetHadir").onclick=async()=>{ if(await confirmBox(`Kosongkan ${S.hadir.size} rekod kehadiran?`,"Lakukan ini hanya sebelum majlis baharu.","Kosongkan")) guarded(store.resetHadir(),"Kehadiran dikosongkan"); };
+$("resetDraw").onclick=async()=>{ if(await confirmBox("Reset all draw results?","Winners and removed numbers will be cleared. Attendance is kept.","Reset")) guarded(store.saveState({winners:[],forfeited:[],cur:null}),"Draw reset"); };
+$("resetHadir").onclick=async()=>{ if(await confirmBox(`Clear ${S.hadir.size} attendance records?`,"Only do this before a new event.","Clear")) guarded(store.resetHadir(),"Attendance cleared"); };
 
 let dl=null; (async()=>{ try{ dl = window.claude?.use ? await window.claude.use("downloads") : null; }catch(e){} })();
 const csvCell=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
 async function save(name, rows){
   const data="﻿"+rows.map(r=>r.map(csvCell).join(",")).join("\r\n");
   if(!dl){ const a=el("a",{href:URL.createObjectURL(new Blob([data],{type:"text/csv;charset=utf-8"})),download:name}); document.body.append(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1000); return; }
-  try{ await dl.save({filename:name, data}); }catch(e){ if(e?.code!=="declined") toast("Fail tidak dapat dimuat turun.", true); }
+  try{ await dl.save({filename:name, data}); }catch(e){ if(e?.code!=="declined") toast("Couldn't download the file.", true); }
 }
-$("expH").onclick=()=>save("kehadiran.csv", [["No Staf","Nama","Cawangan","Masa Daftar","Disahkan PIC","Kaunter"], ...[...S.hadir.entries()].sort((a,b)=>a[1]-b[1]).map(([no,at])=>{ const s=findStaff(no)||{}, h=S.hInfo.get(no)||{}; return [no,s.name,s.branch,new Date(at).toLocaleString("ms-MY"),h.pic||"",idOf(h.kaunter)]; })]);
-$("expR").onclick=()=>save("keputusan-cabutan.csv", [["Hadiah","No Staf","Nama","Cawangan","Status","Masa"], ...[...S.state.winners.map(w=>({...w,st:"Menang"})), ...S.state.forfeited.map(w=>({...w,st:"Tiada sahutan (3 panggilan)"}))].sort((a,b)=>a.at-b.at).map(w=>[w.prize,w.no,w.name,w.branch,w.st,new Date(w.at).toLocaleString("ms-MY")])]);
+$("expH").onclick=()=>save("attendance.csv", [["Staff No","Name","Branch","Check-in Time","Verified by PIC","Counter"], ...[...S.hadir.entries()].sort((a,b)=>a[1]-b[1]).map(([no,at])=>{ const s=findStaff(no)||{}, h=S.hInfo.get(no)||{}; return [no,s.name,s.branch,new Date(at).toLocaleString("en-MY"),h.pic||"",idOf(h.kaunter)]; })]);
+$("expR").onclick=()=>save("draw-results.csv", [["Prize","Staff No","Name","Branch","Status","Time"], ...[...S.state.winners.map(w=>({...w,st:"Won"})), ...S.state.forfeited.map(w=>({...w,st:"No response (3 calls)"}))].sort((a,b)=>a.at-b.at).map(w=>[w.prize,w.no,w.name,w.branch,w.st,new Date(w.at).toLocaleString("en-MY")])]);
 
 route(); renderAll(); renderCfgEdit();
 })();
