@@ -68,6 +68,10 @@ body.viewer .draw{grid-template-columns:minmax(0,1fr)}
 /* projector full screen: only the board (operator panel + tabs hidden; Space starts, Esc exits) */
 :root.fs .side, :root.fs .nav{display:none}
 :root.fs .draw{grid-template-columns:minmax(0,1fr)}
+.fsGo{display:none}
+:root.fs body:not(.viewer) .fsGo{display:flex;align-items:baseline;gap:10px;margin-left:auto;font-family:var(--f-display);font-weight:900;font-size:26px;letter-spacing:.06em;text-transform:uppercase;padding:8px 22px;border-radius:12px;border:0;background:var(--lamp);color:var(--ink);cursor:pointer;box-shadow:0 0 24px var(--lamp-soft)}
+.fsGo small{font-family:var(--f-body);font-size:12px;font-weight:600;letter-spacing:.02em;text-transform:none;opacity:.75}
+.fsGo:disabled{background:var(--panel-2);color:var(--muted);box-shadow:none;cursor:not-allowed}
 .fsHint{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:12;background:rgba(20,30,64,.92);border:1px solid var(--line);border-radius:999px;padding:8px 18px;font-size:14px;color:var(--muted);transition:opacity .6s;pointer-events:none}
 .fsHint kbd{font:700 12px var(--f-body);color:var(--ink);background:var(--lamp);border-radius:5px;padding:2px 7px;margin:0 3px}
 .fsHint.fade{opacity:0}
@@ -253,6 +257,7 @@ td.num{font-variant-numeric:tabular-nums;font-weight:700;color:var(--lamp)}
     <div class="brand"><small>Kumpulan Swis Resources Sdn Bhd · Lucky Draw</small><span id="evTitle">Award &amp; Recognition 2025</span></div>
     <span class="mode" id="mode"><i></i><span>Connecting…</span></span>
     <span class="who" id="who" hidden><b id="whoRole"></b><button class="btn small" id="logout">Log out</button></span>
+    <button class="fsGo" id="fsGo" type="button">Start<small id="fsGoSub"></small></button>
     <nav class="nav" aria-label="Views">
       <a href="#draw" data-v="cabutan">Lucky Draw</a>
       <a href="#checkin" data-v="daftar">Check-in</a>
@@ -418,7 +423,7 @@ td.num{font-variant-numeric:tabular-nums;font-weight:700;color:var(--lamp)}
   </div>
 </div>
 
-<div class="fsHint" id="fsHint" hidden>Press <kbd>Space</kbd> to start the draw · <kbd>Esc</kbd> to exit full screen</div>
+<div class="fsHint" id="fsHint" hidden>Press <kbd>Start</kbd> or <kbd>Space</kbd> to draw · <kbd>Esc</kbd> to exit full screen</div>
 
 <div class="celebrate" id="celebrate" hidden role="dialog" aria-modal="true" aria-labelledby="celTitle">
   <canvas id="fw"></canvas>
@@ -685,6 +690,7 @@ function renderDraw(){
   const go=$("goBtn");
   go.disabled = np<0 || !pool.length || phase!=="idle" || !!S.state.cur;
   go.firstChild.textContent = np<0 ? "Done" : "Start";
+  $("fsGo").disabled=go.disabled; $("fsGo").firstChild.textContent=go.firstChild.textContent; $("fsGoSub").textContent = np<0 ? "" : S.cfg.prizes[np];
   $("goSub").textContent = np<0 ? "All prizes have been won" : S.cfg.prizes[np];
   $("stageTitle").textContent = np<0 ? "Draw complete" : "Drawing: " + S.cfg.prizes[np];
 }
@@ -754,7 +760,7 @@ function startDraw(){
 }
 /* Lampu berlari. remaining < SPIN_MS bila skrin penonton menyertai cabutan yang sudah bermula. */
 function runSpin(pool, remaining, spectator){
-  $("goBtn").disabled=true; $("board").classList.add("spinning");
+  $("goBtn").disabled=$("fsGo").disabled=true; $("board").classList.add("spinning");
   const TOTAL=SPIN_MS, sched=[]; let t=0;
   while(t<TOTAL-650){ sched.push(t); const p=t/TOTAL; t+=45+600*p*p*p; }
   const cd=$("countdown"); cd.hidden=false;
@@ -840,6 +846,7 @@ $("wNo3").onclick=async()=>{
   renderDraw(); if(ok) setTimeout(startDraw, 1200);
 };
 $("goBtn").onclick=startDraw;
+$("fsGo").onclick=e=>{ e.currentTarget.blur(); startDraw(); };
 document.addEventListener("keydown",e=>{ if(e.code==="Space" && !$("v-cabutan").hidden && $("winOv").hidden && $("cfOv").hidden && $("celebrate").hidden && document.activeElement?.tagName!=="INPUT"){ e.preventDefault(); startDraw(); } });
 $("soundBtn").onclick=e=>{ sound=!sound; e.target.textContent="Sound: "+(sound?"On":"Off"); e.target.setAttribute("aria-pressed",sound); };
 $("fsBtn").onclick=()=>{ const d=document.documentElement; (document.fullscreenElement ? document.exitFullscreen() : d.requestFullscreen?.())?.catch?.(()=>toast("Full screen isn't supported here.",true)); };
