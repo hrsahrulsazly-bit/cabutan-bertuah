@@ -2,7 +2,7 @@
 <meta name="theme-color" content="#0c1430">
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Lucky Draw">
-<title>Award Recognition 2025</title>
+<title>Award &amp; Recognition 2025</title>
 <script src="config.js?v=2"></script>
 <script src="vendor/supabase.min.js?v=2.45.4"></script>
 </head><body>
@@ -244,7 +244,7 @@ td.num{font-variant-numeric:tabular-nums;font-weight:700;color:var(--lamp)}
 
 <div class="app">
   <header class="top">
-    <div class="brand"><small>Kumpulan Swis Resources Sdn Bhd · Lucky Draw</small><span id="evTitle">Award Recognition 2025</span></div>
+    <div class="brand"><small>Kumpulan Swis Resources Sdn Bhd · Lucky Draw</small><span id="evTitle">Award &amp; Recognition 2025</span></div>
     <span class="mode" id="mode"><i></i><span>Connecting…</span></span>
     <span class="who" id="who" hidden><b id="whoRole"></b><button class="btn small" id="logout">Log out</button></span>
     <nav class="nav" aria-label="Views">
@@ -434,7 +434,7 @@ td.num{font-variant-numeric:tabular-nums;font-weight:700;color:var(--lamp)}
 <script>
 (function(){
 const $ = id => document.getElementById(id);
-const DEFAULT_CFG = { title:"Award Recognition 2025", prizes:["5th Prize","4th Prize","3rd Prize","2nd Prize","Grand Prize"] };
+const DEFAULT_CFG = { title:"Award & Recognition 2025", prizes:["5th Prize","4th Prize","3rd Prize","2nd Prize","Grand Prize"] };
 const SHARDS = 8, CHUNK = 1500;
 
 const S = { staff:[], map:new Map(), hadir:new Map(), state:{winners:[],forfeited:[]}, cfg:{...DEFAULT_CFG} };
@@ -554,7 +554,7 @@ function wire(st){
   let seenWins=null; // celebrate only winners added after this screen loaded
   st.on("state", s=>{ S.state={winners:s.winners||[],forfeited:s.forfeited||[],cur:s.cur||null}; renderAll(); syncCur();
     const n=S.state.winners.length; if(seenWins!==null && n>seenWins) celebrate(S.state.winners[n-1]); seenWins=n; stateBooted=true; });
-  st.on("cfg", c=>{ S.cfg={title:c.title||DEFAULT_CFG.title, prizes:(c.prizes&&c.prizes.length)?c.prizes:DEFAULT_CFG.prizes}; renderAll(); renderCfgEdit(); });
+  st.on("cfg", c=>{ S.cfg={title:(c.title==="Award Recognition 2025"?"":c.title)||DEFAULT_CFG.title, prizes:(c.prizes&&c.prizes.length)?c.prizes:DEFAULT_CFG.prizes}; renderAll(); renderCfgEdit(); });
 }
 /* ---------- roles: MASTER = semua paparan; HR = daftar hadir sahaja ---------- */
 S.role="master"; S.me=""; S.pics=[]; S.hInfo=new Map(); let SB=null;
@@ -650,7 +650,7 @@ window.addEventListener("hashchange", route);
 new ResizeObserver(()=>document.documentElement.style.setProperty("--hdr", $("v-cabutan").closest(".app").querySelector(".top").offsetHeight+"px")).observe(document.querySelector(".top"));
 
 function renderAll(){
-  $("evTitle").textContent=S.cfg.title;
+  $("evTitle").textContent=S.cfg.title; document.title=S.cfg.title;
   renderDraw(); renderKiosk(); renderSettings();
 }
 
