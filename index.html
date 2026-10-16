@@ -65,6 +65,12 @@ button,input,select{font:inherit;color:inherit}
 
 .side{display:flex;flex-direction:column;gap:12px;min-height:0}
 body.viewer .draw{grid-template-columns:minmax(0,1fr)}
+/* projector full screen: only the board (operator panel + tabs hidden; Space starts, Esc exits) */
+:root.fs .side, :root.fs .nav{display:none}
+:root.fs .draw{grid-template-columns:minmax(0,1fr)}
+.fsHint{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:12;background:rgba(20,30,64,.92);border:1px solid var(--line);border-radius:999px;padding:8px 18px;font-size:14px;color:var(--muted);transition:opacity .6s;pointer-events:none}
+.fsHint kbd{font:700 12px var(--f-body);color:var(--ink);background:var(--lamp);border-radius:5px;padding:2px 7px;margin:0 3px}
+.fsHint.fade{opacity:0}
 body.viewer .side, body.viewer #winOv .actions{display:none}
 .go{font-family:var(--f-display);font-weight:900;font-size:40px;letter-spacing:.06em;text-transform:uppercase;padding:18px;border-radius:16px;background:var(--lamp);color:var(--ink);border:0;cursor:pointer;box-shadow:0 0 30px var(--lamp-soft)}
 .go:disabled{background:var(--panel-2);color:var(--muted);box-shadow:none;cursor:not-allowed}
@@ -411,6 +417,8 @@ td.num{font-variant-numeric:tabular-nums;font-weight:700;color:var(--lamp)}
     <div class="actions"><button class="btn" id="picCancel">Cancel</button></div>
   </div>
 </div>
+
+<div class="fsHint" id="fsHint" hidden>Press <kbd>Space</kbd> to start the draw · <kbd>Esc</kbd> to exit full screen</div>
 
 <div class="celebrate" id="celebrate" hidden role="dialog" aria-modal="true" aria-labelledby="celTitle">
   <canvas id="fw"></canvas>
@@ -835,6 +843,13 @@ $("goBtn").onclick=startDraw;
 document.addEventListener("keydown",e=>{ if(e.code==="Space" && !$("v-cabutan").hidden && $("winOv").hidden && $("cfOv").hidden && $("celebrate").hidden && document.activeElement?.tagName!=="INPUT"){ e.preventDefault(); startDraw(); } });
 $("soundBtn").onclick=e=>{ sound=!sound; e.target.textContent="Sound: "+(sound?"On":"Off"); e.target.setAttribute("aria-pressed",sound); };
 $("fsBtn").onclick=()=>{ const d=document.documentElement; (document.fullscreenElement ? document.exitFullscreen() : d.requestFullscreen?.())?.catch?.(()=>toast("Full screen isn't supported here.",true)); };
+let fsHintT;
+document.addEventListener("fullscreenchange",()=>{
+  const on=!!document.fullscreenElement; document.documentElement.classList.toggle("fs", on);
+  const h=$("fsHint"); clearTimeout(fsHintT); h.classList.remove("fade"); h.hidden=!on || S.role==="hr";
+  if(on){ if(location.hash!=="#draw" && $("v-cabutan").hidden) location.hash="#draw"; document.activeElement?.blur?.(); fsHintT=setTimeout(()=>h.classList.add("fade"),4000); }
+  layoutTiles();
+});
 
 /* ---------- KIOSK ---------- */
 let kHits=[], kFlash=null;
