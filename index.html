@@ -5,6 +5,7 @@
 <title>Award &amp; Recognition 2025</title>
 <script src="config.js?v=2"></script>
 <script src="vendor/supabase.min.js?v=2.45.4"></script>
+<script src="vendor/qrcode.min.js?v=1.4.4"></script>
 </head><body>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -187,6 +188,34 @@ td.num{font-variant-numeric:tabular-nums;font-weight:700;color:var(--lamp)}
 #sResults table input{width:100%;min-width:110px;background:var(--ink);border:1px solid var(--lamp);border-radius:6px;padding:5px 7px}
 #sResults td.act{white-space:nowrap;text-align:right}
 #sResults td.act .btn{margin-left:4px}
+/* counter QR screen */
+.deskhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.deskhead h1{margin-right:auto}
+.qrOv{position:fixed;inset:0;z-index:30;background:var(--ink);display:flex;align-items:center;justify-content:center;padding:20px}
+.qr-card{width:min(760px,100%);text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
+.qr-card h2{margin:0;font-family:var(--f-display);font-weight:900;font-size:clamp(34px,6vw,64px);text-transform:uppercase;letter-spacing:.03em;line-height:1}
+.qr-lead{margin:0;color:var(--muted);font-size:clamp(15px,2.2vw,20px)}
+.qr-box{background:#fff;border-radius:18px;padding:14px;width:min(58vh,82vw);aspect-ratio:1;margin-top:8px;box-shadow:0 0 50px var(--lamp-soft)}
+.qr-box svg{width:100%;height:100%;display:block}
+.qr-ok{min-height:30px;font-size:20px;font-weight:700;color:var(--ok)}
+.qr-meta{color:var(--muted);font-size:13px}
+/* phone self check-in page */
+body.selfmode .nav, body.selfmode .who, body.selfmode .mode{display:none}
+.self{max-width:560px;width:100%;margin:0 auto;padding:18px 0 40px}
+.self-card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:12px}
+.self-card h1{margin:0;font-family:var(--f-display);font-weight:900;font-size:30px;text-transform:uppercase;line-height:1.05}
+.self-card p{margin:0;color:var(--muted)}
+.self-card input{width:100%;font-size:19px;padding:13px 14px;border-radius:12px;border:2px solid var(--line);background:var(--ink)}
+.self-card input:focus{border-color:var(--lamp);outline:none}
+.sf-item{display:flex;flex-direction:column;gap:8px;padding:14px;border-radius:12px;background:var(--ink);border:1px solid var(--line)}
+.sf-item b{font-size:17px;overflow-wrap:anywhere}
+.sf-item span{color:var(--muted);font-size:13px}
+.sf-item .btn.ok{padding:13px;font-size:16px}
+.sf-item .tag{color:var(--lamp);font-weight:700;font-size:13px}
+.sf-list{display:flex;flex-direction:column;gap:8px}
+.self-icon{width:84px;height:84px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:46px;font-weight:900;margin:6px auto 0;background:var(--ok);color:#06281a}
+.self-icon.warn{background:var(--lamp);color:var(--ink)}
+#selfDone{text-align:center}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--panel-2);border:1px solid var(--line);padding:10px 16px;border-radius:10px;z-index:40;font-weight:600;max-width:calc(100% - 32px)}
 .toast.err{border-color:var(--bad);color:var(--bad)}
 
@@ -295,7 +324,7 @@ td.num{font-variant-numeric:tabular-nums;font-weight:700;color:var(--lamp)}
   <section class="view" id="v-daftar" hidden>
     <div class="desk">
       <div class="desk-main">
-        <h1>Check-in</h1>
+        <div class="deskhead"><h1>Check-in</h1><button class="btn small lamp" id="qrOpen" type="button" hidden>Self check-in QR</button></div>
         <p class="lead">Search by name or staff no., then press <b>Check in</b>. Press Enter to check in when only one name matches.</p>
         <div class="kInputWrap"><input id="kInput" type="search" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search" inputmode="search" placeholder="Search name or staff no." aria-label="Search name or staff no."></div>
         <div class="results" id="kResults"></div>
@@ -305,6 +334,24 @@ td.num{font-variant-numeric:tabular-nums;font-weight:700;color:var(--lamp)}
         <div class="label" id="kRecentLbl">Recently checked in</div>
         <ol id="kRecent"></ol>
       </aside>
+    </div>
+  </section>
+
+  <!-- SELF CHECK-IN (phone, opened from the QR code) -->
+  <section class="view" id="v-self" hidden>
+    <div class="self">
+      <div class="self-card" id="selfForm">
+        <div class="eyebrow">Self check-in</div>
+        <h1 id="selfEv">Award &amp; Recognition 2025</h1>
+        <p>Type your name, or your full staff no., then choose yourself.</p>
+        <input id="sfInput" type="search" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search" placeholder="Your name or staff no." aria-label="Your name or staff no.">
+        <div class="sf-list" id="sfResults"></div>
+      </div>
+      <div class="self-card" id="selfDone" hidden>
+        <div class="self-icon" id="sdIcon">✓</div>
+        <h1 id="sdTitle"></h1>
+        <p id="sdText"></p>
+      </div>
     </div>
   </section>
 
@@ -424,6 +471,18 @@ td.num{font-variant-numeric:tabular-nums;font-weight:700;color:var(--lamp)}
 </div>
 
 <div class="fsHint" id="fsHint" hidden>Press <kbd>Start</kbd> or <kbd>Space</kbd> to draw · <kbd>Esc</kbd> to exit full screen</div>
+
+<div class="qrOv" id="qrOv" hidden role="dialog" aria-modal="true" aria-labelledby="qrTitle">
+  <div class="qr-card">
+    <div class="eyebrow" id="qrEv">Award &amp; Recognition 2025</div>
+    <h2 id="qrTitle">Self check-in</h2>
+    <p class="qr-lead">Scan with your phone camera, then search your own name.</p>
+    <div class="qr-box" id="qrBox" aria-label="Self check-in QR code"></div>
+    <div class="qr-ok" id="qrOk" aria-live="polite"></div>
+    <div class="qr-meta"><b id="qrCount">0</b> checked in on this screen · each QR code works for one person</div>
+    <button class="btn" id="qrClose" type="button">Close</button>
+  </div>
+</div>
 
 <div class="celebrate" id="celebrate" hidden role="dialog" aria-modal="true" aria-labelledby="celTitle">
   <canvas id="fw"></canvas>
@@ -589,6 +648,7 @@ async function startSupa(sb, session){
   applyRole(data.role, data.role==="hr" ? idOf(S.me) : "MASTER");
   wire(makeSupa(sb));
   if(data.role==="master") initHrAdmin(sb);
+  $("qrOpen").hidden=false;
 }
 /* MASTER: urus ID HR cawangan + nama PIC setiap ID (fungsi SQL hr_* dan pic_set) */
 const EN_ERR={"ID hanya boleh guna huruf, nombor, titik, sengkang (maks 40 aksara)":"IDs may only use letters, numbers, dots and dashes (max 40 characters)","Hanya MASTER boleh mengurus ID HR":"Only MASTER can manage HR IDs","Kata laluan minimum 6 aksara":"Password must be at least 6 characters","ID ini sudah wujud":"This ID already exists","ID HR ini tidak wujud":"This HR ID doesn't exist","ID ini tidak wujud":"This ID doesn't exist","Maksimum 10 PIC setiap ID":"Maximum 10 PICs per ID"};
@@ -640,6 +700,8 @@ function showLogin(sb, msg){
   const C=window.CABUTAN_SUPABASE;
   if(C?.url && C?.anonKey && window.supabase){
     const sb=window.supabase.createClient(C.url, C.anonKey);
+    const selfTok=location.hash.match(/^#self=([0-9a-f]{8,64})$/i);
+    if(selfTok || location.hash==="#self-done"){ await null; return startSelf(sb, selfTok?.[1]); } // employee's phone: no login (await: let the rest of the script load first)
     $("logout").onclick=async()=>{ await sb.auth.signOut(); location.hash=""; location.reload(); };
     const {data:{session}}=await sb.auth.getSession();
     return session ? startSupa(sb, session) : showLogin(sb);
@@ -651,6 +713,7 @@ function showLogin(sb, msg){
 
 /* ---------- routing ---------- */
 function route(){
+  if(S.self) return;
   const ALIAS={draw:"cabutan",checkin:"daftar",settings:"tetapan"}; // English URLs; old Malay hashes still work
   const h=(location.hash||(S.role==="hr"?"#checkin":"#draw")).slice(1), v=ALIAS[h]||h; let view=["cabutan","daftar","tetapan"].includes(v)?v:"cabutan";
   if(S.role==="hr" && view==="tetapan") view="daftar";
@@ -1084,6 +1147,84 @@ async function save(name, rows){
 }
 $("expH").onclick=()=>save("attendance.csv", [["Staff No","Name","Branch","Check-in Time","Verified by PIC","Counter"], ...[...S.hadir.entries()].sort((a,b)=>a[1]-b[1]).map(([no,at])=>{ const s=findStaff(no)||{}, h=S.hInfo.get(no)||{}; return [no,s.name,s.branch,new Date(at).toLocaleString("en-MY"),h.pic||"",idOf(h.kaunter)]; })]);
 $("expR").onclick=()=>save("draw-results.csv", [["Prize","Staff No","Name","Branch","Status","Time"], ...[...S.state.winners.map(w=>({...w,st:"Won"})), ...S.state.forfeited.map(w=>({...w,st:"No response (3 calls)"}))].sort((a,b)=>a.at-b.at).map(w=>[w.prize,w.no,w.name,w.branch,w.st,new Date(w.at).toLocaleString("en-MY")])]);
+
+/* ---------- SELF CHECK-IN ----------
+   Counter: shows a QR with a one-time token (self_token_new). When someone checks in with it the token is
+   used up, so the counter shows a new QR. Phone: searches and checks in through self_search / self_checkin,
+   then leaves the form; the token is kept in memory only, so refresh or Back means scanning again. */
+let qrTok=null, qrPoll=null, qrRot=null, qrOkT=null, qrN=0, qrBusy=false;
+const QR_ERR=e=>/self_token_new|schema cache/i.test(e?.message||"") ? "Self check-in isn't installed yet. Run supabase-self-checkin.sql in Supabase." : (e?.message||"Could not create a QR code.");
+async function qrNew(){
+  if(!SB || $("qrOv").hidden) return;
+  const {data,error}=await SB.rpc("self_token_new");
+  if(error){ toast(QR_ERR(error), true); return qrClose(); }
+  qrTok=data;
+  const q=qrcode(0,"M"); q.addData(location.origin+location.pathname+"#self="+data); q.make();
+  $("qrBox").innerHTML=q.createSvgTag({cellSize:8, margin:2, scalable:true});
+  clearTimeout(qrRot); qrRot=setTimeout(qrNew, 90000); // fresh code every 90 s even if nobody uses it
+}
+async function qrCheck(){
+  if(!qrTok || qrBusy) return; qrBusy=true;
+  try{
+    const {data}=await SB.from("self_tokens").select("used_at,used_no").eq("token",qrTok).maybeSingle();
+    if(data?.used_at){
+      qrN++; $("qrCount").textContent=qrN;
+      const st=findStaff(data.used_no); $("qrOk").textContent="✓ "+(st?.name||data.used_no)+" checked in";
+      clearTimeout(qrOkT); qrOkT=setTimeout(()=>$("qrOk").textContent="",5000);
+      beep(988,.15,"sine",.1); await qrNew();
+    }
+  }finally{ qrBusy=false; }
+}
+function qrOpen(){ $("qrEv").textContent=S.cfg.title; qrN=0; $("qrCount").textContent="0"; $("qrOk").textContent=""; $("qrBox").textContent=""; $("qrOv").hidden=false; qrNew(); clearInterval(qrPoll); qrPoll=setInterval(qrCheck,1500); }
+function qrClose(){ clearInterval(qrPoll); clearTimeout(qrRot); qrTok=null; $("qrOv").hidden=true; $("kInput")?.focus(); }
+$("qrOpen").onclick=qrOpen; $("qrClose").onclick=qrClose;
+document.addEventListener("keydown",e=>{ if(e.key==="Escape" && !$("qrOv").hidden) qrClose(); });
+
+let selfTok=null, sfT=null, sfSeq=0;
+function startSelf(sb, token){
+  SB=sb; S.self=true; document.body.classList.add("selfmode"); $("loginOv").hidden=true;
+  ["cabutan","daftar","tetapan"].forEach(v=>$("v-"+v).hidden=true); $("v-self").hidden=false;
+  setMode(false,""); document.title="Self check-in · "+DEFAULT_CFG.title;
+  history.replaceState(null,"",location.pathname+location.search+"#self-done"); // the link can't be reused or shared
+  if(!token) return selfDone("info");
+  selfTok=token; sfSeq++; $("selfDone").hidden=true; $("selfForm").hidden=false; $("sfInput").value=""; $("sfResults").textContent="";
+  setTimeout(()=>$("sfInput").focus(),100);
+}
+// scanning a new QR while this page is still open only changes the #hash: start a fresh check-in
+window.addEventListener("hashchange",()=>{ const m=location.hash.match(/^#self=([0-9a-f]{8,64})$/i); if(m && SB) startSelf(SB, m[1]); });
+function selfDone(kind, d){
+  selfTok=null; $("selfForm").hidden=true; $("selfDone").hidden=false; $("sfInput").blur();
+  const ic=$("sdIcon"); ic.classList.toggle("warn", kind!=="ok"); ic.textContent = kind==="ok" ? "✓" : "↻";
+  if(kind==="ok"){ $("sdTitle").textContent=`Thank you, ${d.name}!`; $("sdText").textContent=`You're checked in (${d.no}). Good luck in the lucky draw! To check in someone else, scan the QR code at the counter again.`; fanfare(); }
+  else if(kind==="expired"){ $("sdTitle").textContent="Please scan again"; $("sdText").textContent="This QR code has expired or was already used. Scan the QR code at the counter again."; }
+  else { $("sdTitle").textContent="Scan the QR code"; $("sdText").textContent="To check in, scan the QR code shown at the registration counter."; }
+}
+function selfRender(rows, q){
+  const box=$("sfResults"); box.textContent="";
+  if(q.length<3){ if(q) box.append(el("p",{textContent:"Type at least 3 letters."})); return; }
+  if(!rows.length){ box.append(el("p",{textContent:"No match. Check the spelling, or type your full staff no. If you still can't find yourself, ask the counter."})); return; }
+  rows.forEach(r=>box.append(el("div",{class:"sf-item"}, el("b",{textContent:r.name}), el("span",{textContent:r.no+(r.branch?" · "+r.branch:"")}),
+    r.checked_in ? el("span",{class:"tag",textContent:"Already checked in"}) : el("button",{class:"btn ok",type:"button",textContent:"This is me · Check in",onclick:()=>selfCheckin(r)}))));
+}
+async function selfSearch(){
+  const q=$("sfInput").value.trim(), seq=++sfSeq;
+  if(q.length<3 || !selfTok) return selfRender([], q);
+  const {data,error}=await SB.rpc("self_search",{p_token:selfTok, p_q:q});
+  if(seq!==sfSeq) return; // a newer search is on its way
+  if(error){ if(/QR_EXPIRED/.test(error.message||"")) return selfDone("expired"); return toast(/self_search|schema cache/i.test(error.message||"") ? "Self check-in isn't available yet. Please ask the counter." : "Search failed. Check your internet connection.", true); }
+  selfRender(data||[], q);
+}
+async function selfCheckin(r){
+  if(!await confirmBox(`Check in as ${r.name}?`, `${r.no}${r.branch?" · "+r.branch:""}. Only check yourself in.`, "Check in")) return;
+  const {data,error}=await SB.rpc("self_checkin",{p_token:selfTok, p_no:r.no});
+  if(error) return toast("Check-in failed. Check your internet connection and try again.", true);
+  if(data?.status==="ok") return selfDone("ok", data);
+  if(data?.status==="expired") return selfDone("expired");
+  if(data?.status==="already"){ await alertBox(`${data.name||r.name} is already checked in`, "No need to check in again."); return selfSearch(); }
+  toast("This staff no. was not found. Please ask the counter.", true);
+}
+$("sfInput").addEventListener("input",()=>{ clearTimeout(sfT); sfT=setTimeout(selfSearch,250); });
+$("sfInput").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); clearTimeout(sfT); selfSearch(); } });
 
 route(); renderAll(); renderCfgEdit();
 })();
