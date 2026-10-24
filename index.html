@@ -54,7 +54,7 @@ button,input,select{font:inherit;color:inherit}
 .stage-head .count{color:var(--muted);font-size:14px}
 .stage-head .count b{color:var(--lamp);font-variant-numeric:tabular-nums}
 /* game picker */
-.game{display:flex;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:4px}
+.game{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:4px}
 .game button{flex:1;border:0;background:none;color:var(--muted);font-weight:700;font-size:13px;padding:8px 6px;border-radius:9px;cursor:pointer}
 .game button.on{background:var(--lamp);color:var(--ink)}
 .game button:disabled{cursor:not-allowed;opacity:.6}
@@ -95,6 +95,27 @@ button,input,select{font:inherit;color:inherit}
 .tower.win .tagno{animation:winGlow .7s ease-in-out infinite alternate}
 .tower.win .tower-label{color:var(--lamp)}
 .tower.lose{opacity:.5}
+/* dig */
+.race.dig{flex-direction:row;gap:8px}
+.pit{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.soil{position:relative;flex:1;min-height:0;border-radius:10px;overflow:hidden;
+  background:
+    radial-gradient(circle at 20% 30%,rgba(0,0,0,.25) 0 3px,transparent 4px) 0 0/34px 30px,
+    radial-gradient(circle at 70% 70%,rgba(255,255,255,.08) 0 2px,transparent 3px) 0 0/26px 24px,
+    linear-gradient(#3fa34d 0 7%,#2a6b33 7% 8.5%,#8a5a32 8.5% 30%,#734a28 30% 52%,#5e3c20 52% 74%,#4a2f18 74% 100%)}
+.soil::after{content:"";position:absolute;left:8%;right:8%;bottom:3%;height:4px;border-radius:2px;background:repeating-linear-gradient(90deg,var(--lamp) 0 6px,transparent 6px 12px)}
+.hole{position:absolute;left:50%;top:7%;width:46%;height:0;transform:translateX(-50%);border-radius:0 0 45% 45%;
+  background:linear-gradient(#1a110a,#0d0805);box-shadow:inset 0 0 10px rgba(0,0,0,.8)}
+.gem{position:absolute;left:50%;bottom:4%;transform:translateX(-50%);font-size:clamp(14px,3vh,28px);filter:drop-shadow(0 0 8px rgba(110,198,255,.8))}
+.digger{position:absolute;left:50%;top:0;z-index:2;display:flex;flex-direction:column;align-items:center;gap:2px;transform:translate(-50%,0);will-change:transform}
+.digger .ico{font-size:clamp(20px,5vh,44px);line-height:1;display:inline-block;transform-origin:70% 80%}
+.digger .tagno{font-family:var(--f-display);font-weight:800;font-size:clamp(11px,2.1vh,19px);background:var(--c,var(--lamp));color:var(--ink);border-radius:999px;padding:1px 8px;white-space:nowrap;box-shadow:0 0 12px rgba(0,0,0,.4)}
+.board.racing .digger .ico{animation:dig .32s ease-in-out infinite}
+@keyframes dig{0%,100%{transform:rotate(-35deg)}50%{transform:rotate(25deg) translateY(10%)}}
+.pit.win .soil{box-shadow:0 0 0 3px var(--lamp) inset,0 0 36px var(--lamp-glow)}
+.pit.win .tagno{animation:winGlow .7s ease-in-out infinite alternate}
+.pit.win .tower-label{color:var(--lamp)}
+.pit.lose{opacity:.5}
 .board{flex:1;min-height:200px;position:relative;border-radius:16px;background:radial-gradient(ellipse at 50% 0%,#18245a 0%,var(--ink) 70%);border:1px solid var(--line);overflow:hidden}
 .tiles{position:absolute;inset:12px;display:grid;align-content:center;justify-content:center}
 .tile{display:flex;align-items:center;justify-content:center;border-radius:6px;background:var(--off);color:#5e6c9c;font-family:var(--f-display);font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.02em;transition:background .25s,color .25s,box-shadow .25s;white-space:nowrap;overflow:hidden}
@@ -315,7 +336,9 @@ body.selfmode .nav, body.selfmode .who, body.selfmode .mode{display:none}
   .board{min-height:min(70vh,520px)}
   .race.climb{gap:3px}
   .climber .ico{font-size:18px}
-  .climber .tagno{font-size:9px;padding:0 3px;letter-spacing:0}
+  .climber .tagno, .digger .tagno{font-size:9px;padding:0 3px;letter-spacing:0}
+  .race.dig{gap:3px}
+  .digger .ico{font-size:18px}
   .tower-label{font-size:9px}
   body.viewer .board{min-height:calc(100dvh - var(--hdr,104px) - 70px)}
   .stage-head h2{font-size:18px}
@@ -360,6 +383,7 @@ body.selfmode .nav, body.selfmode .who, body.selfmode .mode{display:none}
           <button type="button" data-game="lights">Lucky lights</button>
           <button type="button" data-game="race">Race</button>
           <button type="button" data-game="climb">Tower climb</button>
+          <button type="button" data-game="dig">Dig</button>
         </div>
         <button class="go" id="goBtn">Start<small id="goSub">Prize draw</small></button>
         <div class="label">Prizes</div>
@@ -981,7 +1005,7 @@ function runSpin(pool, remaining, spectator){
 /* ---------- RACE ----------
    Same fair pick as the lights: the winner is chosen first (crypto random). The race is a show built from
    cur.lanes + cur.seed, so every screen draws the identical race; only the winner reaches the line at the end. */
-const GAMES={ lights:{label:"Lucky lights", stage:"Drawing: "}, race:{label:"Race", stage:"Race: ", show:true}, climb:{label:"Tower climb", stage:"Tower climb: ", show:true} };
+const GAMES={ lights:{label:"Lucky lights", stage:"Drawing: "}, race:{label:"Race", stage:"Race: ", show:true}, climb:{label:"Tower climb", stage:"Tower climb: ", show:true}, dig:{label:"Dig", stage:"Dig: ", show:true} };
 /* lattice transmission tower (drawn here, no logos): tapering legs, cross bracing, peak and three cross-arms with insulators */
 const TOWER_SVG=(()=>{ const P=[], L=(a,b,c,d)=>P.push(`M${a} ${b}L${c} ${d}`);
   const lx=y=>18+(300-y)/260*24, rx=y=>82-(300-y)/260*24;                   // legs: 18→42 and 82→58 from y=300 to y=40
@@ -1005,8 +1029,9 @@ const racePos=(p,f)=>{ const K=p.cum.length-1, x=Math.min(K,Math.max(0,f*K)), i=
 let raceEls=[], raceBuiltFor=null;
 function buildRace(c){
   const box=$("race"); box.textContent=""; raceEls=[]; raceBuiltFor=c.seed;
-  const climb=c.mode==="climb"; box.classList.toggle("climb", climb);
+  const climb=c.mode==="climb", dig=c.mode==="dig"; box.classList.toggle("climb", climb); box.classList.toggle("dig", dig);
   if(climb) return buildClimb(c, box);
+  if(dig) return buildDig(c, box);
   racePlan(c).forEach((p,i)=>{
     const st=findStaff(p.no)||{};
     const runner=el("div",{class:"runner"}, p.no, el("span",{class:"ico",textContent:"🏃"})); runner.style.setProperty("--c",RACE_COLORS[i%RACE_COLORS.length]);
@@ -1026,7 +1051,20 @@ function buildClimb(c, box){
   });
   $("tiles").hidden=true; box.hidden=false;
 }
-function placeRunners(f){ raceEls.forEach(({p,track,runner,up})=>{
+function buildDig(c, box){
+  racePlan(c).forEach((p,i)=>{
+    const st=findStaff(p.no)||{};
+    const runner=el("div",{class:"digger"}, el("span",{class:"tagno",textContent:p.no}), el("span",{class:"ico",textContent:"⛏️"}));
+    runner.style.setProperty("--c",RACE_COLORS[i%RACE_COLORS.length]);
+    const hole=el("div",{class:"hole"}), track=el("div",{class:"soil"}, hole, el("div",{class:"gem",textContent:"💎"}), runner);
+    const lane=el("div",{class:"pit"}, track, el("div",{class:"tower-label",textContent:st.name||p.no,title:st.name||""}));
+    box.append(lane); raceEls.push({p,lane,track,runner,hole,down:true});
+  });
+  $("tiles").hidden=true; box.hidden=false;
+}
+function placeRunners(f){ raceEls.forEach(({p,track,runner,up,down,hole})=>{
+  if(down){ const top=track.clientHeight*.07, max=Math.max(0,track.clientHeight-top-runner.offsetHeight-track.clientHeight*.03), y=racePos(p,f)*max;
+    runner.style.transform=`translate(-50%,${top+y}px)`; hole.style.height=(y+runner.offsetHeight*.75)+"px"; return; }
   if(up){ const max=Math.max(0,track.clientHeight-runner.offsetHeight-track.clientHeight*0.02); runner.style.transform=`translate(-50%,${-racePos(p,f)*max}px)`; return; }
   const max=Math.max(0,track.clientWidth-runner.offsetWidth-20); runner.style.transform=`translate(${racePos(p,f)*max}px,-50%)`; }); }
 function runRace(remaining, spectator){
