@@ -53,6 +53,30 @@ button,input,select{font:inherit;color:inherit}
 .stage-head h2{margin:0;font-family:var(--f-display);font-weight:800;font-size:22px;text-transform:uppercase;letter-spacing:.03em}
 .stage-head .count{color:var(--muted);font-size:14px}
 .stage-head .count b{color:var(--lamp);font-variant-numeric:tabular-nums}
+/* game picker */
+.game{display:flex;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:4px}
+.game button{flex:1;border:0;background:none;color:var(--muted);font-weight:700;font-size:13px;padding:8px 6px;border-radius:9px;cursor:pointer}
+.game button.on{background:var(--lamp);color:var(--ink)}
+.game button:disabled{cursor:not-allowed;opacity:.6}
+/* race board */
+.race{position:absolute;inset:12px;display:flex;flex-direction:column;gap:6px}
+.lane{flex:1;min-height:0;display:grid;grid-template-columns:minmax(80px,15%) 1fr;align-items:center;gap:10px}
+.lane-label{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:var(--muted);font-weight:600;font-size:clamp(12px,2vh,18px);text-align:right}
+.track{position:relative;height:100%;max-height:120px;border-radius:10px;overflow:hidden;
+  background:repeating-linear-gradient(90deg,transparent 0 calc(10% - 2px),rgba(255,255,255,.06) calc(10% - 2px) 10%),var(--off)}
+.track::after{content:"";position:absolute;right:0;top:0;bottom:0;width:18px;opacity:.9;
+  background:conic-gradient(#fff 25%,#0c1430 0 50%,#fff 0 75%,#0c1430 0) 0 0/12px 12px}
+.runner{position:absolute;left:0;top:50%;display:flex;align-items:center;gap:6px;padding:2px 12px 2px 6px;border-radius:999px;
+  background:var(--c,var(--lamp));color:var(--ink);font-family:var(--f-display);font-weight:800;white-space:nowrap;will-change:transform;
+  font-size:clamp(13px,3.2vh,30px);transform:translate(0,-50%);box-shadow:0 0 14px rgba(0,0,0,.35)}
+.runner .ico{font-size:1.15em;display:inline-block}
+.board.racing .runner .ico{animation:run .28s steps(2) infinite}
+@keyframes run{50%{transform:translateY(-12%) rotate(-6deg)}}
+.lane.win .track{box-shadow:0 0 0 3px #fff inset,0 0 40px var(--lamp-glow)}
+.lane.win .runner{box-shadow:0 0 0 3px #fff,0 0 36px var(--lamp-glow);animation:winGlow .7s ease-in-out infinite alternate}
+@keyframes winGlow{from{box-shadow:0 0 0 3px #fff,0 0 18px var(--lamp-glow)}to{box-shadow:0 0 0 5px #fff,0 0 54px var(--lamp-glow)}}
+.lane.win .lane-label{color:var(--lamp)}
+.lane.lose{opacity:.55}
 .board{flex:1;min-height:200px;position:relative;border-radius:16px;background:radial-gradient(ellipse at 50% 0%,#18245a 0%,var(--ink) 70%);border:1px solid var(--line);overflow:hidden}
 .tiles{position:absolute;inset:12px;display:grid;align-content:center;justify-content:center}
 .tile{display:flex;align-items:center;justify-content:center;border-radius:6px;background:var(--off);color:#5e6c9c;font-family:var(--f-display);font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.02em;transition:background .25s,color .25s,box-shadow .25s;white-space:nowrap;overflow:hidden}
@@ -304,11 +328,16 @@ body.selfmode .nav, body.selfmode .who, body.selfmode .mode{display:none}
         </div>
         <div class="board" id="board">
           <div class="tiles" id="tiles"></div>
+          <div class="race" id="race" hidden></div>
           <div class="countdown" id="countdown" hidden></div>
           <div class="empty" id="boardEmpty"><strong>No attendees yet</strong><span>Staff numbers appear here as soon as employees check in at a counter.</span></div>
         </div>
       </div>
       <aside class="side">
+        <div class="game" id="gamePick" role="group" aria-label="Game">
+          <button type="button" data-game="lights">Lucky lights</button>
+          <button type="button" data-game="race">Race</button>
+        </div>
         <button class="go" id="goBtn">Start<small id="goSub">Prize draw</small></button>
         <div class="label">Prizes</div>
         <div class="prizes" id="prizeList"></div>
@@ -506,7 +535,7 @@ body.selfmode .nav, body.selfmode .who, body.selfmode .mode{display:none}
 <script>
 (function(){
 const $ = id => document.getElementById(id);
-const DEFAULT_CFG = { title:"Award & Recognition 2025", prizes:["5th Prize","4th Prize","3rd Prize","2nd Prize","Grand Prize"] };
+const DEFAULT_CFG = { title:"Award & Recognition 2025", game:"lights", prizes:["5th Prize","4th Prize","3rd Prize","2nd Prize","Grand Prize"] };
 const SHARDS = 8, CHUNK = 1500;
 
 const S = { staff:[], map:new Map(), hadir:new Map(), state:{winners:[],forfeited:[]}, cfg:{...DEFAULT_CFG} };
@@ -626,7 +655,7 @@ function wire(st){
   let seenWins=null; // celebrate only winners added after this screen loaded
   st.on("state", s=>{ S.state={winners:s.winners||[],forfeited:s.forfeited||[],cur:s.cur||null}; renderAll(); syncCur();
     const n=S.state.winners.length; if(seenWins!==null && n>seenWins) celebrate(S.state.winners[n-1]); seenWins=n; stateBooted=true; });
-  st.on("cfg", c=>{ S.cfg={title:(c.title==="Award Recognition 2025"?"":c.title)||DEFAULT_CFG.title, prizes:(c.prizes&&c.prizes.length)?c.prizes:DEFAULT_CFG.prizes}; renderAll(); renderCfgEdit(); });
+  st.on("cfg", c=>{ S.cfg={title:(c.title==="Award Recognition 2025"?"":c.title)||DEFAULT_CFG.title, prizes:(c.prizes&&c.prizes.length)?c.prizes:DEFAULT_CFG.prizes, game:c.game==="race"?"race":"lights"}; renderAll(); renderCfgEdit(); });
 }
 /* ---------- roles: MASTER = semua paparan; HR = daftar hadir sahaja ---------- */
 S.role="master"; S.me=""; S.pics=[]; S.hInfo=new Map(); let SB=null;
@@ -738,6 +767,9 @@ function renderDraw(){
   $("eligCount").textContent=pool.length;
   const tiles=$("tiles"); tiles.textContent=""; tileEls=new Map();
   pool.forEach(no=>{ const t=el("div",{class:"tile",textContent:no}); tileEls.set(no,t); tiles.append(t); });
+  const racing=cand?.mode==="race" && phase!=="idle"; $("race").hidden=!racing; tiles.hidden=racing;
+  if(racing && phase==="announce" && raceBuiltFor!==cand.seed) raceFinish(); // screen joined after the finish
+  document.querySelectorAll("#gamePick button").forEach(b=>{ b.classList.toggle("on", b.dataset.game===(S.cfg.game||"lights")); b.disabled=phase!=="idle" || !!S.state.cur; });
   if(cand && phase==="announce" && tileEls.has(cand.no)) tileEls.get(cand.no).classList.add("win");
   $("boardEmpty").hidden = pool.length>0;
   if(!pool.length && S.hadir.size){ $("boardEmpty").querySelector("strong").textContent="No eligible numbers left"; $("boardEmpty").querySelector("span").textContent="Every attendee has been drawn or removed."; }
@@ -755,7 +787,7 @@ function renderDraw(){
   go.firstChild.textContent = np<0 ? "Done" : "Start";
   $("fsGo").disabled=go.disabled; $("fsGo").firstChild.textContent=go.firstChild.textContent; $("fsGoSub").textContent = np<0 ? "" : S.cfg.prizes[np];
   $("goSub").textContent = np<0 ? "All prizes have been won" : S.cfg.prizes[np];
-  $("stageTitle").textContent = np<0 ? "Draw complete" : "Drawing: " + S.cfg.prizes[np];
+  $("stageTitle").textContent = np<0 ? "Draw complete" : (S.cfg.game==="race" ? "Race: " : "Drawing: ") + S.cfg.prizes[np];
 }
 function layoutTiles(){
   const box=$("tiles"); const n=tileEls.size; if(!n || $("v-cabutan").hidden) return;
@@ -819,10 +851,17 @@ function startDraw(){
   const winNo=pool[rnd(pool.length)];
   const s=findStaff(winNo)||{no:winNo,name:"",branch:""};
   cand={no:winNo,name:s.name,branch:s.branch,prize:S.cfg.prizes[pi]}; calls=0;
+  if(S.cfg.game==="race"){ // up to 8 runners: the winner + random others, in random lanes
+    const others=pool.filter(n=>n!==winNo), lanes=[winNo];
+    while(lanes.length<RACE_LANES && others.length) lanes.push(others.splice(rnd(others.length),1)[0]);
+    for(let i=lanes.length-1;i>0;i--){ const j=rnd(i+1); [lanes[i],lanes[j]]=[lanes[j],lanes[i]]; }
+    Object.assign(cand,{mode:"race", lanes, seed:rnd(2147483647)});
+  }
   phase="spin"; saveCur(); renderDraw(); runSpin(pool, SPIN_MS);
 }
 /* Lampu berlari. remaining < SPIN_MS bila skrin penonton menyertai cabutan yang sudah bermula. */
 function runSpin(pool, remaining, spectator){
+  if(cand?.mode==="race") return runRace(remaining, spectator);
   $("goBtn").disabled=$("fsGo").disabled=true; $("board").classList.add("spinning");
   const TOTAL=SPIN_MS, sched=[]; let t=0;
   while(t<TOTAL-650){ sched.push(t); const p=t/TOTAL; t+=45+600*p*p*p; }
@@ -843,10 +882,65 @@ function runSpin(pool, remaining, spectator){
   };
   requestAnimationFrame(frame);
 }
+/* ---------- RACE ----------
+   Same fair pick as the lights: the winner is chosen first (crypto random). The race is a show built from
+   cur.lanes + cur.seed, so every screen draws the identical race; only the winner reaches the line at the end. */
+const RACE_LANES=8, RACE_COLORS=["#ffc845","#47d69a","#6ec6ff","#ff9f43","#c38bff","#ff7070","#7cf0e0","#f5f5f5"];
+function mulberry32(a){ return ()=>{ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function racePlan(c){
+  const r=mulberry32(c.seed||1), K=12;
+  return c.lanes.map(no=>{
+    const sp=Array.from({length:K},()=>0.45+r());              // uneven pace = overtakes along the way
+    const sum=sp.reduce((a,b)=>a+b,0), fin= no===c.no ? 1 : 0.78+r()*0.17; // only the winner reaches the line
+    let acc=0; return {no, cum:[0,...sp.map(v=>(acc+=v/sum)*fin)]};
+  });
+}
+const racePos=(p,f)=>{ const K=p.cum.length-1, x=Math.min(K,Math.max(0,f*K)), i=Math.min(K-1,Math.floor(x)), t=x-i, e=t*t*(3-2*t); return p.cum[i]+(p.cum[i+1]-p.cum[i])*e; };
+let raceEls=[], raceBuiltFor=null;
+function buildRace(c){
+  const box=$("race"); box.textContent=""; raceEls=[]; raceBuiltFor=c.seed;
+  racePlan(c).forEach((p,i)=>{
+    const st=findStaff(p.no)||{};
+    const runner=el("div",{class:"runner"}, el("span",{class:"ico",textContent:"🏃"}), p.no); runner.style.setProperty("--c",RACE_COLORS[i%RACE_COLORS.length]);
+    const track=el("div",{class:"track"},runner), lane=el("div",{class:"lane"}, el("div",{class:"lane-label",textContent:st.name||p.no,title:st.name||""}), track);
+    box.append(lane); raceEls.push({p,lane,track,runner});
+  });
+  $("tiles").hidden=true; box.hidden=false;
+}
+function placeRunners(f){ raceEls.forEach(({p,track,runner})=>{ const max=Math.max(0,track.clientWidth-runner.offsetWidth-20); runner.style.transform=`translate(${racePos(p,f)*max}px,-50%)`; }); }
+function runRace(remaining, spectator){
+  buildRace(cand); $("goBtn").disabled=$("fsGo").disabled=true; $("board").classList.add("spinning","racing");
+  const TOTAL=SPIN_MS, cd=$("countdown"); cd.hidden=false;
+  const t0=performance.now()-(TOTAL-Math.min(TOTAL,remaining)); let lastTick=0;
+  const frame=now=>{
+    const el2=now-t0, f=Math.min(1,el2/TOTAL); placeRunners(f);
+    cd.textContent=Math.max(0,Math.ceil((TOTAL-el2)/1000));
+    if(now-lastTick>180){ beep(300+rnd(4)*40,.03,"square",.025); lastTick=now; }
+    if(el2>=TOTAL){ cd.hidden=true; $("board").classList.remove("racing");
+      if(spectator) return spectatorSpinDone();
+      $("board").classList.remove("spinning"); landed(); return; }
+    requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(frame);
+}
+function raceFinish(){
+  if(raceBuiltFor!==cand.seed) buildRace(cand);
+  placeRunners(1); $("board").classList.remove("racing");
+  raceEls.forEach(({p,lane})=>{ lane.classList.toggle("win",p.no===cand.no); lane.classList.toggle("lose",p.no!==cand.no); });
+  const w=raceEls.find(x=>x.p.no===cand.no); if(w) w.runner.firstChild.textContent="🏆";
+}
+new ResizeObserver(()=>{ if(!$("race").hidden && raceEls.length && phase==="announce") placeRunners(1); }).observe($("board"));
+document.getElementById("gamePick").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-game]"); if(!b || b.disabled) return;
+  if(phase!=="idle" || S.state.cur) return toast("Wait until the current draw is finished.");
+  if(S.cfg.game===b.dataset.game) return;
+  guarded(store.saveCfg({...S.cfg, game:b.dataset.game}), b.dataset.game==="race" ? "Game: Race" : "Game: Lucky lights");
+});
 function landed(){
   stopWait(); spectating=false; $("board").classList.remove("spinning"); $("countdown").hidden=true;
   const c=S.state.cur;
   if(S.role!=="hr" && c && c.no===cand.no && !c.revealed) guarded(store.saveState({winners:S.state.winners, forfeited:S.state.forfeited, cur:{...c, revealed:true}}));
+  if(cand.mode==="race") raceFinish();
   phase="announce"; const t=tileEls.get(cand.no); t?.classList.add("win"); t?.scrollIntoView?.({block:"nearest"}); fanfare();
   setTimeout(showWinner, 1100);
 }
@@ -863,7 +957,7 @@ function updCalls(){
 /* The candidate being announced lives in draw/state.cur ({no,name,branch,prize,calls,started}), so a refresh
    (or a second screen on #cabutan) brings the overlay back once the 10 s spin would have ended. */
 const SPIN_MS=10000; let curTimer=null;
-function saveCur(){ const {no,name,branch,prize}=cand; guarded(store.saveState({winners:S.state.winners, forfeited:S.state.forfeited, cur:{no,name,branch,prize,calls,started:Date.now()}})); }
+function saveCur(){ const {no,name,branch,prize,mode,lanes,seed}=cand; guarded(store.saveState({winners:S.state.winners, forfeited:S.state.forfeited, cur:{no,name,branch,prize,calls,started:Date.now(), ...(mode==="race"?{mode,lanes,seed}:{})}})); }
 /* Other screens (HR phones, a refreshed MASTER) follow the draw in draw_state.cur. They never reveal before
    MASTER: an HR screen keeps the lights running until MASTER writes cur.revealed. Device clocks are only used
    to estimate how far a draw already got when a screen joins it part-way. */
@@ -890,7 +984,7 @@ function syncCur(){
   if(phase==="announce" && cand?.no===c.no){ if((c.calls||0)!==calls){ calls=c.calls||0; updCalls(); } return; }
   clearTimeout(curTimer);
   if($("v-cabutan").hidden) return;                                  // route() calls syncCur when the board is shown
-  cand={no:c.no,name:c.name,branch:c.branch,prize:c.prize}; calls=c.calls||0;
+  cand={no:c.no,name:c.name,branch:c.branch,prize:c.prize, ...(c.mode==="race"?{mode:"race",lanes:c.lanes,seed:c.seed}:{})}; calls=c.calls||0;
   if(c.revealed || !eligible().includes(c.no)){ phase="announce"; renderDraw(); return showWinner(); }
   const left=(c.started||0)+SPIN_MS-Date.now();
   const dur=stateBooted ? SPIN_MS : Math.min(SPIN_MS, Math.max(1500, left)); // live: full spin from now; joining: estimate
@@ -1049,7 +1143,7 @@ function drawCfg(){
 $("cTitle").addEventListener("input",e=>cfgDraft.title=e.target.value);
 $("pAdd").onclick=()=>{ cfgDraft.prizes.push("Prize "+(cfgDraft.prizes.length+1)); drawCfg(); };
 $("pDel").onclick=()=>{ if(cfgDraft.prizes.length>1){ cfgDraft.prizes.pop(); drawCfg(); } };
-$("cSave").onclick=()=>{ const c={title:cfgDraft.title.trim()||DEFAULT_CFG.title, prizes:cfgDraft.prizes.map((p,i)=>p.trim()||("Prize "+(i+1)))}; guarded(store.saveCfg(c),"Settings saved"); $("cSave").blur(); };
+$("cSave").onclick=()=>{ const c={title:cfgDraft.title.trim()||DEFAULT_CFG.title, game:S.cfg.game||"lights", prizes:cfgDraft.prizes.map((p,i)=>p.trim()||("Prize "+(i+1)))}; guarded(store.saveCfg(c),"Settings saved"); $("cSave").blur(); };
 
 function loadXLSX(){ return window.XLSX ? Promise.resolve() : new Promise((ok,no)=>{ const s=document.createElement("script"); s.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"; s.onload=ok; s.onerror=no; document.head.append(s); }); }
 function parseRows(rows){
