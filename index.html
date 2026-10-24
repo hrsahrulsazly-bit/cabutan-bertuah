@@ -108,10 +108,14 @@ button,input,select{font:inherit;color:inherit}
   background:linear-gradient(#1a110a,#0d0805);box-shadow:inset 0 0 10px rgba(0,0,0,.8)}
 .gem{position:absolute;left:50%;bottom:4%;transform:translateX(-50%);font-size:clamp(14px,3vh,28px);filter:drop-shadow(0 0 8px rgba(110,198,255,.8))}
 .digger{position:absolute;left:50%;top:0;z-index:2;display:flex;flex-direction:column;align-items:center;gap:2px;transform:translate(-50%,0);will-change:transform}
-.digger .ico{font-size:clamp(20px,5vh,44px);line-height:1;display:inline-block;transform-origin:70% 80%}
+.digger .ico{line-height:0;display:block}
+.digger .ico svg{width:clamp(30px,7.5vh,70px);height:auto;display:block;overflow:visible}
+.digger .trophy{font-size:clamp(16px,3.5vh,32px);line-height:1}
 .digger .tagno{font-family:var(--f-display);font-weight:800;font-size:clamp(11px,2.1vh,19px);background:var(--c,var(--lamp));color:var(--ink);border-radius:999px;padding:1px 8px;white-space:nowrap;box-shadow:0 0 12px rgba(0,0,0,.4)}
-.board.racing .digger .ico{animation:dig .32s ease-in-out infinite}
-@keyframes dig{0%,100%{transform:rotate(-35deg)}50%{transform:rotate(25deg) translateY(10%)}}
+.board.racing .digger .swing{animation:hoe .34s ease-in-out infinite}
+.board.racing .digger .bob{animation:bob .34s ease-in-out infinite}
+@keyframes hoe{0%,100%{transform:rotate(-55deg)}55%{transform:rotate(18deg)}}
+@keyframes bob{0%,100%{transform:translateY(0)}55%{transform:translateY(1.5px)}}
 .pit.win .soil{box-shadow:0 0 0 3px var(--lamp) inset,0 0 36px var(--lamp-glow)}
 .pit.win .tagno{animation:winGlow .7s ease-in-out infinite alternate}
 .pit.win .tower-label{color:var(--lamp)}
@@ -338,7 +342,7 @@ body.selfmode .nav, body.selfmode .who, body.selfmode .mode{display:none}
   .climber .ico{font-size:18px}
   .climber .tagno, .digger .tagno{font-size:9px;padding:0 3px;letter-spacing:0}
   .race.dig{gap:3px}
-  .digger .ico{font-size:18px}
+  .digger .ico svg{width:26px}
   .tower-label{font-size:9px}
   body.viewer .board{min-height:calc(100dvh - var(--hdr,104px) - 70px)}
   .stage-head h2{font-size:18px}
@@ -1051,10 +1055,23 @@ function buildClimb(c, box){
   });
   $("tiles").hidden=true; box.hidden=false;
 }
+const DIGGER_SVG=`<svg viewBox="0 0 44 50" aria-hidden="true">
+  <g class="bob">
+    <path d="M17 33 L13 47 M24 33 L28 47" stroke="#2b3a67" stroke-width="4" stroke-linecap="round"/>
+    <rect x="13" y="19" width="14" height="16" rx="4" fill="#ff8c1a"/><rect x="13" y="26" width="14" height="2.4" fill="#fff" opacity=".85"/>
+    <circle cx="20" cy="13" r="5.2" fill="#e8b27c"/>
+    <path d="M14.3 12.4a5.7 5.7 0 0 1 11.4 0z" fill="#ffd23f"/><rect x="13" y="11.6" width="14" height="1.8" rx=".9" fill="#f0b400"/>
+    <g class="swing" style="transform-box:view-box;transform-origin:21px 22px">
+      <path d="M21 22 L31 25" stroke="#e8b27c" stroke-width="3.2" stroke-linecap="round"/>
+      <path d="M26 12 L36 38" stroke="#8b5a2b" stroke-width="2.6" stroke-linecap="round"/>
+      <path d="M31.5 36.5 L40.5 35 L39 43 L33 42.5z" fill="#c3cad6" stroke="#7d8696" stroke-width=".8"/>
+    </g>
+  </g>
+</svg>`;
 function buildDig(c, box){
   racePlan(c).forEach((p,i)=>{
     const st=findStaff(p.no)||{};
-    const runner=el("div",{class:"digger"}, el("span",{class:"tagno",textContent:p.no}), el("span",{class:"ico",textContent:"⛏️"}));
+    const runner=el("div",{class:"digger"}, el("span",{class:"tagno",textContent:p.no}), el("span",{class:"ico",innerHTML:DIGGER_SVG}));
     runner.style.setProperty("--c",RACE_COLORS[i%RACE_COLORS.length]);
     const hole=el("div",{class:"hole"}), track=el("div",{class:"soil"}, hole, el("div",{class:"gem",textContent:"💎"}), runner);
     const lane=el("div",{class:"pit"}, track, el("div",{class:"tower-label",textContent:st.name||p.no,title:st.name||""}));
@@ -1085,7 +1102,7 @@ function raceFinish(){
   if(raceBuiltFor!==cand.seed) buildRace(cand);
   placeRunners(1); $("board").classList.remove("racing");
   raceEls.forEach(({p,lane})=>{ lane.classList.toggle("win",p.no===cand.no); lane.classList.toggle("lose",p.no!==cand.no); });
-  const w=raceEls.find(x=>x.p.no===cand.no); if(w){ const ic=w.runner.querySelector(".ico"); ic.textContent="🏆"; ic.style.transform="none"; }
+  const w=raceEls.find(x=>x.p.no===cand.no); if(w){ const ic=w.runner.querySelector(".ico"); if(ic.querySelector("svg")){ if(!w.runner.querySelector(".trophy")) w.runner.prepend(el("span",{class:"trophy",textContent:"🏆"})); } else { ic.textContent="🏆"; ic.style.transform="none"; } }
 }
 new ResizeObserver(()=>{ if(!$("race").hidden && raceEls.length && phase==="announce") placeRunners(1); }).observe($("board"));
 document.getElementById("gamePick").addEventListener("click",e=>{
