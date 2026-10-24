@@ -120,6 +120,27 @@ button,input,select{font:inherit;color:inherit}
 .pit.win .tagno{animation:winGlow .7s ease-in-out infinite alternate}
 .pit.win .tower-label{color:var(--lamp)}
 .pit.lose{opacity:.5}
+/* wiring */
+.wtrack{position:relative;height:100%;max-height:120px;border-radius:10px;background:var(--off);overflow:visible}
+.wsrc{position:absolute;left:6px;top:50%;transform:translateY(-50%);width:34px;height:70%;max-height:48px;border-radius:7px;
+  background:linear-gradient(#3a4a7a,#26325c);border:2px solid #8fa0c8;display:flex;align-items:center;justify-content:center;font-size:clamp(14px,2.6vh,24px)}
+.wroute{position:absolute;left:44px;right:54px;top:50%;height:0;border-top:3px dashed rgba(255,255,255,.14)}
+.wfill{position:absolute;left:44px;top:50%;height:5px;margin-top:-2px;width:0;border-radius:3px;background:var(--c,var(--lamp));
+  box-shadow:0 0 8px var(--c,var(--lamp));background-image:repeating-linear-gradient(90deg,transparent 0 22px,rgba(0,0,0,.35) 22px 26px)}
+.wworker{position:absolute;left:0;top:50%;z-index:2;display:flex;flex-direction:column-reverse;align-items:center;gap:1px;transform:translate(0,-50%);will-change:transform}
+.wworker .ico{line-height:0}
+.wworker .ico svg{width:auto;height:clamp(28px,6.5vh,62px);display:block;overflow:visible}
+.wworker .tagno{font-family:var(--f-display);font-weight:800;font-size:clamp(11px,2.1vh,19px);background:var(--c,var(--lamp));color:var(--ink);border-radius:999px;padding:1px 8px;white-space:nowrap}
+.board.racing .wworker .hands{animation:twist .3s ease-in-out infinite}
+.board.racing .wworker .bob{animation:bob .3s ease-in-out infinite}
+@keyframes twist{0%,100%{transform:rotate(-12deg)}50%{transform:rotate(14deg)}}
+.wlamp{position:absolute;right:6px;top:50%;z-index:3;transform:translateY(-50%);font-size:clamp(22px,5vh,46px);line-height:1;filter:grayscale(1) brightness(.55);transition:filter .3s}
+.wlamp.on{filter:none;animation:lampOn 1s ease-out both}
+.wlamp.on::before{content:"";position:absolute;inset:-70%;border-radius:50%;z-index:-1;background:radial-gradient(circle,rgba(255,220,90,.85),rgba(255,200,69,.25) 45%,transparent 70%);animation:halo 1.2s ease-in-out infinite alternate}
+@keyframes lampOn{0%{filter:grayscale(1) brightness(.55)}20%{filter:brightness(2)}35%{filter:grayscale(1) brightness(.6)}55%,100%{filter:brightness(1.25) drop-shadow(0 0 18px #ffd23f)}}
+@keyframes halo{from{opacity:.65;transform:scale(.9)}to{opacity:1;transform:scale(1.12)}}
+.wlane.win .wtrack{box-shadow:0 0 0 3px var(--lamp) inset,0 0 30px var(--lamp-glow)}
+.wlane.win .tagno{animation:winGlow .7s ease-in-out infinite alternate}
 .board{flex:1;min-height:200px;position:relative;border-radius:16px;background:radial-gradient(ellipse at 50% 0%,#18245a 0%,var(--ink) 70%);border:1px solid var(--line);overflow:hidden}
 .tiles{position:absolute;inset:12px;display:grid;align-content:center;justify-content:center}
 .tile{display:flex;align-items:center;justify-content:center;border-radius:6px;background:var(--off);color:#5e6c9c;font-family:var(--f-display);font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.02em;transition:background .25s,color .25s,box-shadow .25s;white-space:nowrap;overflow:hidden}
@@ -343,6 +364,10 @@ body.selfmode .nav, body.selfmode .who, body.selfmode .mode{display:none}
   .climber .tagno, .digger .tagno{font-size:9px;padding:0 3px;letter-spacing:0}
   .race.dig{gap:3px}
   .digger .ico svg{width:26px}
+  .wworker .ico svg{height:24px}
+  .wworker .tagno{font-size:9px;padding:0 4px}
+  .wsrc{width:22px;left:3px}
+  .wroute,.wfill{left:28px}
   .tower-label{font-size:9px}
   body.viewer .board{min-height:calc(100dvh - var(--hdr,104px) - 70px)}
   .stage-head h2{font-size:18px}
@@ -388,6 +413,7 @@ body.selfmode .nav, body.selfmode .who, body.selfmode .mode{display:none}
           <button type="button" data-game="race">Race</button>
           <button type="button" data-game="climb">Tower climb</button>
           <button type="button" data-game="dig">Dig</button>
+          <button type="button" data-game="wire">Wiring</button>
         </div>
         <button class="go" id="goBtn">Start<small id="goSub">Prize draw</small></button>
         <div class="label">Prizes</div>
@@ -965,6 +991,7 @@ function victoryTune(){
   crash(t+13*b,.32); snare(t+13*b,.3);
 }
 function firework(){ const c=audio(); if(!c) return; const t=c.currentTime; noise(t,.3,{vol:.16,lp:900}); for(let i=0;i<6;i++) noise(t+.06+Math.random()*.35,.04,{vol:.035,hp:5000}); }
+function powerOn(){ const c=audio(); if(!c) return; const t=c.currentTime; noise(t,.18,{vol:.22,hp:2500}); noise(t+.05,.08,{vol:.12,hp:6000}); tone(220,t+.05,.5,{type:"sawtooth",vol:.05,cutoff:2400,slide:4}); tone(midi(88),t+.25,.8,{type:"sine",vol:.12,cutoff:9000}); }
 function chime(){ const c=audio(); if(!c) return; const t=c.currentTime; tone(midi(84),t,.9,{type:"sine",vol:.16,cutoff:8000}); tone(midi(79),t+.32,1.1,{type:"sine",vol:.16,cutoff:8000}); }
 function rnd(n){ const a=new Uint32Array(1); crypto.getRandomValues(a); return a[0]%n; }
 
@@ -1009,7 +1036,7 @@ function runSpin(pool, remaining, spectator){
 /* ---------- RACE ----------
    Same fair pick as the lights: the winner is chosen first (crypto random). The race is a show built from
    cur.lanes + cur.seed, so every screen draws the identical race; only the winner reaches the line at the end. */
-const GAMES={ lights:{label:"Lucky lights", stage:"Drawing: "}, race:{label:"Race", stage:"Race: ", show:true}, climb:{label:"Tower climb", stage:"Tower climb: ", show:true}, dig:{label:"Dig", stage:"Dig: ", show:true} };
+const GAMES={ lights:{label:"Lucky lights", stage:"Drawing: "}, race:{label:"Race", stage:"Race: ", show:true}, climb:{label:"Tower climb", stage:"Tower climb: ", show:true}, dig:{label:"Dig", stage:"Dig: ", show:true}, wire:{label:"Wiring", stage:"Wiring: ", show:true} };
 /* lattice transmission tower (drawn here, no logos): tapering legs, cross bracing, peak and three cross-arms with insulators */
 const TOWER_SVG=(()=>{ const P=[], L=(a,b,c,d)=>P.push(`M${a} ${b}L${c} ${d}`);
   const lx=y=>18+(300-y)/260*24, rx=y=>82-(300-y)/260*24;                   // legs: 18→42 and 82→58 from y=300 to y=40
@@ -1036,6 +1063,8 @@ function buildRace(c){
   const climb=c.mode==="climb", dig=c.mode==="dig"; box.classList.toggle("climb", climb); box.classList.toggle("dig", dig);
   if(climb) return buildClimb(c, box);
   if(dig) return buildDig(c, box);
+  box.classList.toggle("wire", c.mode==="wire");
+  if(c.mode==="wire") return buildWire(c, box);
   racePlan(c).forEach((p,i)=>{
     const st=findStaff(p.no)||{};
     const runner=el("div",{class:"runner"}, p.no, el("span",{class:"ico",textContent:"🏃"})); runner.style.setProperty("--c",RACE_COLORS[i%RACE_COLORS.length]);
@@ -1068,6 +1097,31 @@ const DIGGER_SVG=`<svg viewBox="0 0 44 50" aria-hidden="true">
     </g>
   </g>
 </svg>`;
+const WORKER_SVG=`<svg viewBox="0 0 40 50" aria-hidden="true">
+  <g class="bob">
+    <path d="M16 34 L13 47 M23 34 L26 47" stroke="#22305c" stroke-width="4" stroke-linecap="round"/>
+    <rect x="12" y="19" width="15" height="17" rx="4" fill="#2f6fd6"/><path d="M14 19 L14 27 M25 19 L25 27" stroke="#ffd23f" stroke-width="1.6"/>
+    <circle cx="19.5" cy="13" r="5.2" fill="#e8b27c"/>
+    <path d="M13.8 12.4a5.7 5.7 0 0 1 11.4 0z" fill="#ffd23f"/><rect x="12.6" y="11.6" width="14" height="1.8" rx=".9" fill="#f0b400"/>
+    <g class="hands" style="transform-box:view-box;transform-origin:21px 23px">
+      <path d="M21 23 L32 26" stroke="#e8b27c" stroke-width="3.2" stroke-linecap="round"/>
+      <path d="M31 24.5 L37 22.5 M31 27 L37 28.5" stroke="#e0412b" stroke-width="2.2" stroke-linecap="round"/>
+    </g>
+  </g>
+</svg>`;
+function buildWire(c, box){
+  racePlan(c).forEach((p,i)=>{
+    const st=findStaff(p.no)||{}, col=RACE_COLORS[i%RACE_COLORS.length];
+    const fill=el("div",{class:"wfill"}); fill.style.setProperty("--c",col);
+    const runner=el("div",{class:"wworker"}, el("span",{class:"ico",innerHTML:WORKER_SVG}), el("span",{class:"tagno",textContent:p.no}));
+    runner.style.setProperty("--c",col);
+    const lamp=el("div",{class:"wlamp",textContent:"💡"});
+    const track=el("div",{class:"wtrack"}, el("div",{class:"wsrc",textContent:"⚡"}), el("div",{class:"wroute"}), fill, runner, lamp);
+    const lane=el("div",{class:"lane wlane"}, el("div",{class:"lane-label",textContent:st.name||p.no,title:st.name||""}), track);
+    box.append(lane); raceEls.push({p,lane,track,runner,fill,lamp,wire:true});
+  });
+  $("tiles").hidden=true; box.hidden=false;
+}
 function buildDig(c, box){
   racePlan(c).forEach((p,i)=>{
     const st=findStaff(p.no)||{};
@@ -1079,7 +1133,9 @@ function buildDig(c, box){
   });
   $("tiles").hidden=true; box.hidden=false;
 }
-function placeRunners(f){ raceEls.forEach(({p,track,runner,up,down,hole})=>{
+function placeRunners(f){ raceEls.forEach(({p,track,runner,up,down,hole,wire,fill,lamp})=>{
+  if(wire){ const x0=fill.offsetLeft, span=Math.max(0,track.clientWidth-x0-lamp.offsetWidth-12), x=racePos(p,f)*span;
+    fill.style.width=x+"px"; runner.style.transform=`translate(${x0+x-runner.offsetWidth*.85}px,-50%)`; return; }
   if(down){ const top=track.clientHeight*.07, max=Math.max(0,track.clientHeight-top-runner.offsetHeight-track.clientHeight*.03), y=racePos(p,f)*max;
     runner.style.transform=`translate(-50%,${top+y}px)`; hole.style.height=(y+runner.offsetHeight*.75)+"px"; return; }
   if(up){ const max=Math.max(0,track.clientHeight-runner.offsetHeight-track.clientHeight*0.02); runner.style.transform=`translate(-50%,${-racePos(p,f)*max}px)`; return; }
@@ -1101,7 +1157,8 @@ function runRace(remaining, spectator){
 function raceFinish(){
   if(raceBuiltFor!==cand.seed) buildRace(cand);
   placeRunners(1); $("board").classList.remove("racing");
-  raceEls.forEach(({p,lane})=>{ lane.classList.toggle("win",p.no===cand.no); lane.classList.toggle("lose",p.no!==cand.no); });
+  raceEls.forEach(({p,lane,lamp})=>{ lane.classList.toggle("win",p.no===cand.no); lane.classList.toggle("lose",p.no!==cand.no); lamp?.classList.toggle("on",p.no===cand.no); });
+  if(cand.mode==="wire") powerOn();
   const w=raceEls.find(x=>x.p.no===cand.no); if(w){ const ic=w.runner.querySelector(".ico"); if(ic.querySelector("svg")){ if(!w.runner.querySelector(".trophy")) w.runner.prepend(el("span",{class:"trophy",textContent:"🏆"})); } else { ic.textContent="🏆"; ic.style.transform="none"; } }
 }
 new ResizeObserver(()=>{ if(!$("race").hidden && raceEls.length && phase==="announce") placeRunners(1); }).observe($("board"));
