@@ -66,14 +66,29 @@ button,input,select{font:inherit;color:inherit}
   background:repeating-linear-gradient(90deg,transparent 0 calc(10% - 2px),rgba(255,255,255,.06) calc(10% - 2px) 10%),var(--off)}
 .track::after{content:"";position:absolute;right:0;top:0;bottom:0;width:18px;opacity:.9;
   background:conic-gradient(#fff 25%,#0c1430 0 50%,#fff 0 75%,#0c1430 0) 0 0/12px 12px}
-.runner{position:absolute;left:0;top:50%;display:flex;align-items:center;gap:6px;padding:2px 6px 2px 12px;border-radius:999px;
-  background:var(--c,var(--lamp));color:var(--ink);font-family:var(--f-display);font-weight:800;white-space:nowrap;will-change:transform;
-  font-size:clamp(13px,3.2vh,30px);transform:translate(0,-50%);box-shadow:0 0 14px rgba(0,0,0,.35)}
-.runner .ico{font-size:1.15em;display:inline-block;transform:scaleX(-1)} /* emoji faces left: flip it to face the finish line */
-.board.racing .runner .ico{animation:run .28s steps(2) infinite}
-@keyframes run{0%,100%{transform:scaleX(-1)}50%{transform:scaleX(-1) translateY(-12%) rotate(-8deg)}}
+.runner{position:absolute;left:0;top:50%;display:flex;align-items:center;gap:4px;white-space:nowrap;will-change:transform;transform:translate(0,-50%)}
+.runner .tagno{font-family:var(--f-display);font-weight:800;font-size:clamp(11px,2.3vh,22px);background:var(--c,var(--lamp));color:var(--ink);border-radius:999px;padding:1px 9px;box-shadow:0 0 12px rgba(0,0,0,.35)}
+.runner .ico{line-height:0;display:block}
+.runner .ico svg{height:clamp(24px,7vh,72px);width:auto;display:block;overflow:visible;color:var(--c,var(--lamp))}
+.runner .trophy{font-size:clamp(14px,3vh,28px);line-height:1}
+/* run cycle: legs and arms swing in opposite phase, body bobs */
+.runfig .legA,.runfig .legB,.runfig .armA,.runfig .armB{transform-box:view-box}
+.runfig .legA,.runfig .legB{transform-origin:20px 29px}
+.runfig .armA,.runfig .armB{transform-origin:22px 17px}
+.runfig .legA{transform:rotate(28deg)} .runfig .legB{transform:rotate(-28deg)}
+.runfig .armA{transform:rotate(-35deg)} .runfig .armB{transform:rotate(35deg)}
+.board.racing .runfig .legA{animation:stride .34s ease-in-out infinite}
+.board.racing .runfig .legB{animation:stride .34s ease-in-out infinite reverse}
+.board.racing .runfig .armA{animation:swing .34s ease-in-out infinite}
+.board.racing .runfig .armB{animation:swing .34s ease-in-out infinite reverse}
+.board.racing .runfig .bodyg{animation:runbob .17s ease-in-out infinite alternate}
+@keyframes stride{0%,100%{transform:rotate(38deg)}50%{transform:rotate(-38deg)}}
+@keyframes swing{0%,100%{transform:rotate(-45deg)}50%{transform:rotate(45deg)}}
+@keyframes runbob{from{transform:translateY(0)}to{transform:translateY(-1.6px)}}
+.runfig .armsup{display:none}
+.lane.win .runfig .armA,.lane.win .runfig .armB{display:none} .lane.win .runfig .armsup{display:inline} /* victory: both arms up */
 .lane.win .track{box-shadow:0 0 0 3px #fff inset,0 0 40px var(--lamp-glow)}
-.lane.win .runner{box-shadow:0 0 0 3px #fff,0 0 36px var(--lamp-glow);animation:winGlow .7s ease-in-out infinite alternate}
+.lane.win .runner .tagno{box-shadow:0 0 0 3px #fff,0 0 36px var(--lamp-glow);animation:winGlow .7s ease-in-out infinite alternate}
 @keyframes winGlow{from{box-shadow:0 0 0 3px #fff,0 0 18px var(--lamp-glow)}to{box-shadow:0 0 0 5px #fff,0 0 54px var(--lamp-glow)}}
 .lane.win .lane-label{color:var(--lamp)}
 .lane.lose{opacity:.55}
@@ -1067,7 +1082,7 @@ function buildRace(c){
   if(c.mode==="wire") return buildWire(c, box);
   racePlan(c).forEach((p,i)=>{
     const st=findStaff(p.no)||{};
-    const runner=el("div",{class:"runner"}, p.no, el("span",{class:"ico",textContent:"🏃"})); runner.style.setProperty("--c",RACE_COLORS[i%RACE_COLORS.length]);
+    const runner=el("div",{class:"runner"}, el("span",{class:"tagno",textContent:p.no}), el("span",{class:"ico",innerHTML:RUNNER_SVG})); runner.style.setProperty("--c",RACE_COLORS[i%RACE_COLORS.length]);
     const track=el("div",{class:"track"},runner), lane=el("div",{class:"lane"}, el("div",{class:"lane-label",textContent:st.name||p.no,title:st.name||""}), track);
     box.append(lane); raceEls.push({p,lane,track,runner});
   });
@@ -1122,6 +1137,16 @@ function buildWire(c, box){
   });
   $("tiles").hidden=true; box.hidden=false;
 }
+const RUNNER_SVG=`<svg class="runfig" viewBox="0 0 40 50" aria-hidden="true"><g class="bodyg">
+  <g class="armB"><path d="M22 17 L18.5 23.5 L22.5 27" fill="none" stroke="#c98d5a" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></g>
+  <g class="legB"><path d="M20 29 L18 38.5 L22.5 45.5" fill="none" stroke="#c98d5a" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 45.5 L26.5 46" stroke="#1f2a4d" stroke-width="3.2" stroke-linecap="round"/></g>
+  <path d="M24.2 14.5 L20 29" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>
+  <path d="M20.6 27.5 L19.6 31" stroke="#1f2a4d" stroke-width="8.4" stroke-linecap="round"/>
+  <g class="legA"><path d="M20 29 L22.5 38.5 L19 45.5" fill="none" stroke="#e8b27c" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M18 45.5 L23.5 46" stroke="#1f2a4d" stroke-width="3.2" stroke-linecap="round"/></g>
+  <circle cx="26.5" cy="8.5" r="5" fill="#e8b27c"/><path d="M21.8 7.4 a5 5 0 0 1 9.2 -1.6 q-4.4 -.6 -9.2 1.6z" fill="#2b1a10"/>
+  <g class="armA"><path d="M22 17 L25.5 23.5 L30 22" fill="none" stroke="#e8b27c" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></g>
+  <g class="armsup"><path d="M22.4 16.5 L19.5 9.5 L18.6 3 M23.6 16.2 L29.5 10.5 L32.5 4.5" fill="none" stroke="#e8b27c" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></g>
+</g></svg>`;
 function buildDig(c, box){
   racePlan(c).forEach((p,i)=>{
     const st=findStaff(p.no)||{};
@@ -1160,6 +1185,7 @@ function raceFinish(){
   raceEls.forEach(({p,lane,lamp})=>{ lane.classList.toggle("win",p.no===cand.no); lane.classList.toggle("lose",p.no!==cand.no); lamp?.classList.toggle("on",p.no===cand.no); });
   if(cand.mode==="wire") powerOn();
   const w=raceEls.find(x=>x.p.no===cand.no); if(w){ const ic=w.runner.querySelector(".ico"); if(ic.querySelector("svg")){ if(!w.runner.querySelector(".trophy")) w.runner.prepend(el("span",{class:"trophy",textContent:"🏆"})); } else { ic.textContent="🏆"; ic.style.transform="none"; } }
+  placeRunners(1); // re-place: the trophy made the winner wider
 }
 new ResizeObserver(()=>{ if(!$("race").hidden && raceEls.length && phase==="announce") placeRunners(1); }).observe($("board"));
 document.getElementById("gamePick").addEventListener("click",e=>{
