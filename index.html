@@ -78,9 +78,9 @@ button,input,select{font:inherit;color:inherit}
 .runfig .legA{transform:rotate(28deg)} .runfig .legB{transform:rotate(-28deg)}
 .runfig .armA{transform:rotate(-35deg)} .runfig .armB{transform:rotate(35deg)}
 .board.racing .runfig .legA{animation:stride .34s ease-in-out infinite}
-.board.racing .runfig .legB{animation:stride .34s ease-in-out infinite reverse}
-.board.racing .runfig .armA{animation:swing .34s ease-in-out infinite}
-.board.racing .runfig .armB{animation:swing .34s ease-in-out infinite reverse}
+.board.racing .runfig .legB{animation:stride .34s ease-in-out -.17s infinite} /* half a cycle behind: legs cross */
+.board.racing .runfig .armA{animation:swing .34s ease-in-out infinite} /* near arm forward while near leg is back */
+.board.racing .runfig .armB{animation:swing .34s ease-in-out -.17s infinite}
 .board.racing .runfig .bodyg{animation:runbob .17s ease-in-out infinite alternate}
 @keyframes stride{0%,100%{transform:rotate(38deg)}50%{transform:rotate(-38deg)}}
 @keyframes swing{0%,100%{transform:rotate(-45deg)}50%{transform:rotate(45deg)}}
