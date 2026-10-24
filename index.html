@@ -66,12 +66,12 @@ button,input,select{font:inherit;color:inherit}
   background:repeating-linear-gradient(90deg,transparent 0 calc(10% - 2px),rgba(255,255,255,.06) calc(10% - 2px) 10%),var(--off)}
 .track::after{content:"";position:absolute;right:0;top:0;bottom:0;width:18px;opacity:.9;
   background:conic-gradient(#fff 25%,#0c1430 0 50%,#fff 0 75%,#0c1430 0) 0 0/12px 12px}
-.runner{position:absolute;left:0;top:50%;display:flex;align-items:center;gap:6px;padding:2px 12px 2px 6px;border-radius:999px;
+.runner{position:absolute;left:0;top:50%;display:flex;align-items:center;gap:6px;padding:2px 6px 2px 12px;border-radius:999px;
   background:var(--c,var(--lamp));color:var(--ink);font-family:var(--f-display);font-weight:800;white-space:nowrap;will-change:transform;
   font-size:clamp(13px,3.2vh,30px);transform:translate(0,-50%);box-shadow:0 0 14px rgba(0,0,0,.35)}
-.runner .ico{font-size:1.15em;display:inline-block}
+.runner .ico{font-size:1.15em;display:inline-block;transform:scaleX(-1)} /* emoji faces left: flip it to face the finish line */
 .board.racing .runner .ico{animation:run .28s steps(2) infinite}
-@keyframes run{50%{transform:translateY(-12%) rotate(-6deg)}}
+@keyframes run{0%,100%{transform:scaleX(-1)}50%{transform:scaleX(-1) translateY(-12%) rotate(-8deg)}}
 .lane.win .track{box-shadow:0 0 0 3px #fff inset,0 0 40px var(--lamp-glow)}
 .lane.win .runner{box-shadow:0 0 0 3px #fff,0 0 36px var(--lamp-glow);animation:winGlow .7s ease-in-out infinite alternate}
 @keyframes winGlow{from{box-shadow:0 0 0 3px #fff,0 0 18px var(--lamp-glow)}to{box-shadow:0 0 0 5px #fff,0 0 54px var(--lamp-glow)}}
@@ -901,7 +901,7 @@ function buildRace(c){
   const box=$("race"); box.textContent=""; raceEls=[]; raceBuiltFor=c.seed;
   racePlan(c).forEach((p,i)=>{
     const st=findStaff(p.no)||{};
-    const runner=el("div",{class:"runner"}, el("span",{class:"ico",textContent:"🏃"}), p.no); runner.style.setProperty("--c",RACE_COLORS[i%RACE_COLORS.length]);
+    const runner=el("div",{class:"runner"}, p.no, el("span",{class:"ico",textContent:"🏃"})); runner.style.setProperty("--c",RACE_COLORS[i%RACE_COLORS.length]);
     const track=el("div",{class:"track"},runner), lane=el("div",{class:"lane"}, el("div",{class:"lane-label",textContent:st.name||p.no,title:st.name||""}), track);
     box.append(lane); raceEls.push({p,lane,track,runner});
   });
@@ -927,7 +927,7 @@ function raceFinish(){
   if(raceBuiltFor!==cand.seed) buildRace(cand);
   placeRunners(1); $("board").classList.remove("racing");
   raceEls.forEach(({p,lane})=>{ lane.classList.toggle("win",p.no===cand.no); lane.classList.toggle("lose",p.no!==cand.no); });
-  const w=raceEls.find(x=>x.p.no===cand.no); if(w) w.runner.firstChild.textContent="🏆";
+  const w=raceEls.find(x=>x.p.no===cand.no); if(w){ const ic=w.runner.querySelector(".ico"); ic.textContent="🏆"; ic.style.transform="none"; }
 }
 new ResizeObserver(()=>{ if(!$("race").hidden && raceEls.length && phase==="announce") placeRunners(1); }).observe($("board"));
 document.getElementById("gamePick").addEventListener("click",e=>{
